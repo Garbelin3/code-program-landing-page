@@ -25,7 +25,8 @@ export const BarList = () => {
         const { data, error } = await supabase
           .from("bars")
           .select("*")
-          .eq("active", true);
+          .eq("active", true)
+          .order("name", { ascending: true });
         
         if (error) {
           throw error;
@@ -104,7 +105,7 @@ export const BarList = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {bars.map((bar) => (
-        <Card key={bar.id} className="overflow-hidden">
+        <Card key={bar.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
           <CardHeader className="bg-blue-50">
             <CardTitle>{bar.name}</CardTitle>
           </CardHeader>
