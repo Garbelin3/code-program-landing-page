@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,24 +12,46 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [creatingAdmin, setCreatingAdmin] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       const {
+        data: { session },
         error
       } = await supabase.auth.signInWithPassword({
         email,
         password
       });
+      
       if (error) {
         throw error;
       }
+      
+      // Fetch the user's profile to get their role
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, bar_id")
+        .eq("id", session?.user.id)
+        .single();
+        
+      if (profileError) {
+        throw profileError;
+      }
+      
       toast({
         title: "Login bem-sucedido",
         description: "Você foi autenticado com sucesso!"
       });
+      
+      // Redirect based on role
+      if (profileData.role === 'user') {
+        navigate("/dashboard"); // Regular users go to catalog/dashboard
+      } else {
+        navigate("/dashboard"); // Professional users will be redirected in the Dashboard component
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao fazer login",

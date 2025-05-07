@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { AccessControl } from "@/components/AccessControl";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
@@ -17,18 +18,48 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
+      
+      if (session?.user) {
+        // Fetch user role
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+          
+        if (profileData) {
+          setUserRole(profileData.role);
+        }
+      }
+      
       setLoading(false);
 
       // Set up auth state listener
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (_, session) => {
+        async (_, session) => {
           setUser(session?.user || null);
+          
+          if (session?.user) {
+            // Fetch user role
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", session.user.id)
+              .single();
+              
+            if (profileData) {
+              setUserRole(profileData.role);
+            }
+          } else {
+            setUserRole(null);
+          }
         }
       );
 
@@ -37,6 +68,12 @@ const App = () => {
 
     getUser();
   }, []);
+
+  // Function to determine where to redirect a professional user
+  const getRedirectPath = () => {
+    if (!userRole || userRole === 'user') return "/dashboard";
+    return "/dashboard"; // All roles go to dashboard which will show the appropriate content
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -48,15 +85,27 @@ const App = () => {
             <Route path="/" element={<Index user={user} loading={loading} />} />
             <Route 
               path="/login" 
-              element={user ? <Navigate to="/dashboard" /> : <Login />} 
+              element={user ? <Navigate to={getRedirectPath()} /> : <Login />} 
             />
             <Route 
               path="/register" 
-              element={user ? <Navigate to="/dashboard" /> : <Register />} 
+              element={
+                user ? (
+                  <Navigate to={getRedirectPath()} />
+                ) : (
+                  <Register />
+                )
+              } 
             />
             <Route 
               path="/dashboard" 
-              element={!user && !loading ? <Navigate to="/login" /> : <Dashboard user={user} />} 
+              element={
+                !user && !loading ? (
+                  <Navigate to="/login" />
+                ) : (
+                  <Dashboard user={user} />
+                )
+              } 
             />
             <Route path="*" element={<NotFound />} />
           </Routes>

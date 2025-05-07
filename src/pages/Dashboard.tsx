@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LogOut } from "lucide-react";
 
 interface BarData {
   id: string;
@@ -80,6 +81,15 @@ const Dashboard = ({ user }: DashboardProps) => {
     fetchProfileAndBar();
   }, [user]);
 
+  // Handle professional account restrictions
+  useEffect(() => {
+    if (!loading && profileData && profileData.role !== 'user') {
+      // No need to redirect again if already on correct page
+      // Just ensure the correct dashboard is shown
+      document.title = `Painel ${profileData.role} - PedeBar`;
+    }
+  }, [profileData, loading, navigate]);
+
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -130,10 +140,21 @@ const Dashboard = ({ user }: DashboardProps) => {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto py-4 px-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">PedeBar</h1>
-          <Button variant="outline" onClick={handleLogout}>
-            Sair
-          </Button>
+          <div className="flex items-center">
+            <h1 className="text-2xl font-bold text-gray-900">PedeBar</h1>
+            {profileData && profileData.role !== 'user' && (
+              <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                {profileData.role === 'dono' ? 'Dono' : 
+                 profileData.role === 'funcionario' ? 'Funcionário' : 
+                 profileData.role === 'caixa' ? 'Caixa' : 'Admin'}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
+              <LogOut className="h-4 w-4" /> Sair
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -293,9 +314,9 @@ const UserDashboard = ({ profileData }: { profileData: ProfileData }) => {
     <>
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-2xl">Painel do Usuário</CardTitle>
+          <CardTitle className="text-2xl">Catálogo de Bares</CardTitle>
           <CardDescription>
-            Bem-vindo à plataforma PedeBar
+            Explore os bares disponíveis no PedeBar
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -311,6 +332,33 @@ const UserDashboard = ({ profileData }: { profileData: ProfileData }) => {
               <p>
                 <span className="font-medium">Função:</span> Usuário
               </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Bares Disponíveis</CardTitle>
+          <CardDescription>Escolha um bar para fazer seu pedido</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Esta seção seria preenchida com os bares disponíveis */}
+            <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+              <h4 className="font-bold">Bar do Zé</h4>
+              <p className="text-sm text-gray-500">Rua das Flores, 123</p>
+              <Button className="mt-3 w-full">Ver Cardápio</Button>
+            </div>
+            <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+              <h4 className="font-bold">Boteco da Vila</h4>
+              <p className="text-sm text-gray-500">Av. Principal, 456</p>
+              <Button className="mt-3 w-full">Ver Cardápio</Button>
+            </div>
+            <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+              <h4 className="font-bold">Choperia do Carlos</h4>
+              <p className="text-sm text-gray-500">Praça Central, 789</p>
+              <Button className="mt-3 w-full">Ver Cardápio</Button>
             </div>
           </div>
         </CardContent>
