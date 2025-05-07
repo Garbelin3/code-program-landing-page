@@ -1,29 +1,24 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
 import { BarList } from "@/components/BarList";
-
 interface IndexProps {
   user: User | null;
   loading: boolean;
 }
-
-const Index = ({ user, loading }: IndexProps) => {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-500 to-purple-600">
+const Index = ({
+  user,
+  loading
+}: IndexProps) => {
+  return <div className="min-h-screen bg-gradient-to-b from-blue-500 to-purple-600">
       <header className="container mx-auto py-4 px-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-white">PedeBar</h1>
         <div className="space-x-4">
-          {!loading && (
-            user ? (
-              <Link to="/dashboard">
+          {!loading && (user ? <Link to="/dashboard">
                 <Button variant="outline" className="bg-white text-blue-600 hover:bg-blue-100">
                   Dashboard
                 </Button>
-              </Link>
-            ) : (
-              <>
+              </Link> : <>
                 <Link to="/login">
                   <Button variant="outline" className="bg-white text-blue-600 hover:bg-blue-100">
                     Entrar
@@ -34,9 +29,7 @@ const Index = ({ user, loading }: IndexProps) => {
                     Cadastrar
                   </Button>
                 </Link>
-              </>
-            )
-          )}
+              </>)}
         </div>
       </header>
 
@@ -56,12 +49,7 @@ const Index = ({ user, loading }: IndexProps) => {
           </Link>
         </div>
 
-        <section className="mt-16">
-          <h3 className="text-3xl font-bold mb-8">Encontre Bares Parceiros</h3>
-          <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
-            <BarList />
-          </div>
-        </section>
+        
       </main>
 
       <section className="container mx-auto px-6 py-16">
@@ -86,8 +74,6 @@ const Index = ({ user, loading }: IndexProps) => {
           </div>
         </div>
       </section>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
