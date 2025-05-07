@@ -11,6 +11,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +36,35 @@ const Login = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createAdminUser = async () => {
+    setCreatingAdmin(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-admin');
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Usuário administrador criado",
+        description: "Usuário administrador criado com sucesso! Email: admin@codeprogram.com.br, Senha: codeprogram2025@Admin",
+      });
+      
+      // Preenche os campos com as credenciais do admin
+      setEmail("admin@codeprogram.com.br");
+      setPassword("codeprogram2025@Admin");
+      
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar usuário administrador",
+        description: error.message || "Ocorreu um erro ao criar o usuário administrador.",
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingAdmin(false);
     }
   };
 
@@ -82,6 +112,21 @@ const Login = () => {
             <Link to="/register" className="text-blue-600 hover:underline">
               Cadastre-se
             </Link>
+          </p>
+        </div>
+        
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={createAdminUser}
+            disabled={creatingAdmin}
+          >
+            {creatingAdmin ? "Criando..." : "Criar Usuário Admin"}
+          </Button>
+          <p className="mt-2 text-xs text-gray-500 text-center">
+            Admin: admin@codeprogram.com.br<br/>
+            Senha: codeprogram2025@Admin
           </p>
         </div>
       </div>
