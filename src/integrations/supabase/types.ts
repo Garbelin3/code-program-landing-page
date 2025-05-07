@@ -9,8 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bars: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          bar_id: string | null
           created_at: string
           email: string
           full_name: string | null
@@ -19,6 +44,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bar_id?: string | null
           created_at?: string
           email: string
           full_name?: string | null
@@ -27,6 +53,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bar_id?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
@@ -34,7 +61,15 @@ export type Database = {
           role?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -43,6 +78,10 @@ export type Database = {
     Functions: {
       is_admin: {
         Args: { user_id: string }
+        Returns: boolean
+      }
+      user_can_access_bar: {
+        Args: { bar_uuid: string }
         Returns: boolean
       }
     }

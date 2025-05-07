@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [creatingAdmin, setCreatingAdmin] = useState(false);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -37,6 +40,7 @@ const Login = () => {
       setLoading(false);
     }
   };
+
   const createAdminUser = async () => {
     setCreatingAdmin(true);
     try {
@@ -65,6 +69,7 @@ const Login = () => {
       setCreatingAdmin(false);
     }
   };
+
   return <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-blue-500 to-purple-600 p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
         <div className="text-center mb-6">
@@ -98,10 +103,17 @@ const Login = () => {
         </div>
         
         <div className="mt-6 pt-4 border-t border-gray-200">
-          
-          
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={createAdminUser} 
+            disabled={creatingAdmin}
+          >
+            {creatingAdmin ? "Criando..." : "Criar Usuário Admin (para teste)"}
+          </Button>
         </div>
       </div>
     </div>;
 };
+
 export default Login;
