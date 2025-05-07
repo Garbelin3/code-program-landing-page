@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LogOut } from "lucide-react";
+import { BarList } from "@/components/BarList";
 
 interface BarData {
   id: string;
@@ -343,24 +343,7 @@ const UserDashboard = ({ profileData }: { profileData: ProfileData }) => {
           <CardDescription>Escolha um bar para fazer seu pedido</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Esta seção seria preenchida com os bares disponíveis */}
-            <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h4 className="font-bold">Bar do Zé</h4>
-              <p className="text-sm text-gray-500">Rua das Flores, 123</p>
-              <Button className="mt-3 w-full">Ver Cardápio</Button>
-            </div>
-            <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h4 className="font-bold">Boteco da Vila</h4>
-              <p className="text-sm text-gray-500">Av. Principal, 456</p>
-              <Button className="mt-3 w-full">Ver Cardápio</Button>
-            </div>
-            <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-              <h4 className="font-bold">Choperia do Carlos</h4>
-              <p className="text-sm text-gray-500">Praça Central, 789</p>
-              <Button className="mt-3 w-full">Ver Cardápio</Button>
-            </div>
-          </div>
+          <BarList />
         </CardContent>
       </Card>
     </>
