@@ -8,10 +8,10 @@ import { toast } from "@/hooks/use-toast";
 
 interface Bar {
   id: string;
-  name: string;
-  address: string;
-  phone: string | null;
-  active: boolean;
+  nome: string;
+  endereco: string;
+  telefone: string | null;
+  ativo: boolean;
 }
 
 export const BarList = () => {
@@ -23,9 +23,9 @@ export const BarList = () => {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from("bars")
+          .from("bares")
           .select("*")
-          .eq("active", true);
+          .eq("ativo", true);
         
         if (error) {
           throw error;
@@ -48,14 +48,14 @@ export const BarList = () => {
 
     // Set up real-time subscription to listen for changes
     const channel = supabase
-      .channel('bars-changes')
+      .channel('bares-changes')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'bars',
-          filter: 'active=eq.true'
+          table: 'bares',
+          filter: 'ativo=eq.true'
         },
         (payload) => {
           setBars(prevBars => [...prevBars, payload.new as Bar]);
@@ -66,8 +66,8 @@ export const BarList = () => {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'bars',
-          filter: 'active=eq.true'
+          table: 'bares',
+          filter: 'ativo=eq.true'
         },
         (payload) => {
           setBars(prevBars => 
@@ -80,7 +80,7 @@ export const BarList = () => {
         {
           event: 'DELETE',
           schema: 'public',
-          table: 'bars'
+          table: 'bares'
         },
         (payload) => {
           setBars(prevBars => prevBars.filter(bar => bar.id !== payload.old.id));
@@ -106,17 +106,17 @@ export const BarList = () => {
       {bars.map((bar) => (
         <Card key={bar.id} className="overflow-hidden">
           <CardHeader className="bg-blue-50">
-            <CardTitle>{bar.name}</CardTitle>
+            <CardTitle>{bar.nome}</CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="flex items-start space-x-2 mb-2">
               <MapPin className="h-4 w-4 mt-1 text-gray-500" />
-              <p className="text-gray-600">{bar.address}</p>
+              <p className="text-gray-600">{bar.endereco}</p>
             </div>
-            {bar.phone && (
+            {bar.telefone && (
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-gray-500" />
-                <p className="text-gray-600">{bar.phone}</p>
+                <p className="text-gray-600">{bar.telefone}</p>
               </div>
             )}
           </CardContent>
