@@ -4,22 +4,14 @@ import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogOut } from "lucide-react";
 import { BarList } from "@/components/BarList";
-
 interface BarData {
   id: string;
   name: string;
   address: string | null;
 }
-
 interface ProfileData {
   id: string;
   full_name: string | null;
@@ -28,56 +20,48 @@ interface ProfileData {
   bar_id: string | null;
   bar?: BarData | null;
 }
-
 interface DashboardProps {
   user: User | null;
 }
-
-const Dashboard = ({ user }: DashboardProps) => {
+const Dashboard = ({
+  user
+}: DashboardProps) => {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [barData, setBarData] = useState<BarData | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
   useEffect(() => {
     const fetchProfileAndBar = async () => {
       if (!user) return;
-      
       try {
         // Fetch profile data
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
+        const {
+          data: profileData,
+          error: profileError
+        } = await supabase.from("profiles").select("*").eq("id", user.id).single();
         if (profileError) throw profileError;
-        
+
         // If profile has a bar_id, fetch the bar data
         if (profileData.bar_id) {
-          const { data: barData, error: barError } = await supabase
-            .from("bars")
-            .select("*")
-            .eq("id", profileData.bar_id)
-            .single();
-          
+          const {
+            data: barData,
+            error: barError
+          } = await supabase.from("bars").select("*").eq("id", profileData.bar_id).single();
           if (barError) throw barError;
           setBarData(barData);
         }
-        
         setProfileData(profileData);
       } catch (error: any) {
         console.error("Error fetching data:", error.message);
         toast({
           title: "Erro ao carregar dados",
           description: error.message,
-          variant: "destructive",
+          variant: "destructive"
         });
       } finally {
         setLoading(false);
       }
     };
-
     fetchProfileAndBar();
   }, [user]);
 
@@ -89,39 +73,34 @@ const Dashboard = ({ user }: DashboardProps) => {
       document.title = `Painel ${profileData.role} - PedeBar`;
     }
   }, [profileData, loading, navigate]);
-
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      
+      const {
+        error
+      } = await supabase.auth.signOut();
       if (error) throw error;
-      
       navigate("/");
       toast({
         title: "Logout bem-sucedido",
-        description: "Você foi desconectado com sucesso.",
+        description: "Você foi desconectado com sucesso."
       });
     } catch (error: any) {
       toast({
         title: "Erro ao fazer logout",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+    return <div className="min-h-screen flex justify-center items-center bg-gray-50">
         <p className="text-lg text-gray-600">Carregando...</p>
-      </div>
-    );
+      </div>;
   }
 
   // Determine which dashboard to display based on role
   const renderDashboardContent = () => {
     if (!profileData) return null;
-
     switch (profileData.role) {
       case "admin":
         return <AdminDashboard />;
@@ -135,20 +114,14 @@ const Dashboard = ({ user }: DashboardProps) => {
         return <UserDashboard profileData={profileData} />;
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gray-50">
+  return <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto py-4 px-6 flex justify-between items-center">
           <div className="flex items-center">
             <h1 className="text-2xl font-bold text-gray-900">PedeBar</h1>
-            {profileData && profileData.role !== 'user' && (
-              <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                {profileData.role === 'dono' ? 'Dono' : 
-                 profileData.role === 'funcionario' ? 'Funcionário' : 
-                 profileData.role === 'caixa' ? 'Caixa' : 'Admin'}
-              </span>
-            )}
+            {profileData && profileData.role !== 'user' && <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                {profileData.role === 'dono' ? 'Dono' : profileData.role === 'funcionario' ? 'Funcionário' : profileData.role === 'caixa' ? 'Caixa' : 'Admin'}
+              </span>}
           </div>
           <div className="flex items-center space-x-4">
             <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
@@ -161,14 +134,12 @@ const Dashboard = ({ user }: DashboardProps) => {
       <main className="container mx-auto py-8 px-6">
         {renderDashboardContent()}
       </main>
-    </div>
-  );
+    </div>;
 };
 
 // Admin Dashboard Component
 const AdminDashboard = () => {
-  return (
-    <>
+  return <>
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-2xl">Painel de Administração</CardTitle>
@@ -193,14 +164,18 @@ const AdminDashboard = () => {
           </div>
         </CardContent>
       </Card>
-    </>
-  );
+    </>;
 };
 
 // Owner Dashboard Component
-const OwnerDashboard = ({ profileData, barData }: { profileData: ProfileData; barData: BarData | null }) => {
-  return (
-    <>
+const OwnerDashboard = ({
+  profileData,
+  barData
+}: {
+  profileData: ProfileData;
+  barData: BarData | null;
+}) => {
+  return <>
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-2xl">Painel do Dono</CardTitle>
@@ -212,14 +187,10 @@ const OwnerDashboard = ({ profileData, barData }: { profileData: ProfileData; ba
           <div className="space-y-4">
             <div className="p-4 bg-white rounded-lg shadow">
               <h3 className="font-semibold text-lg">Informações do Bar</h3>
-              {barData ? (
-                <div className="mt-2">
+              {barData ? <div className="mt-2">
                   <p><span className="font-medium">Nome:</span> {barData.name}</p>
                   <p><span className="font-medium">Endereço:</span> {barData.address || "Não informado"}</p>
-                </div>
-              ) : (
-                <p className="text-red-500">Dados do bar não encontrados</p>
-              )}
+                </div> : <p className="text-red-500">Dados do bar não encontrados</p>}
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -236,14 +207,18 @@ const OwnerDashboard = ({ profileData, barData }: { profileData: ProfileData; ba
           </div>
         </CardContent>
       </Card>
-    </>
-  );
+    </>;
 };
 
 // Employee Dashboard Component
-const EmployeeDashboard = ({ profileData, barData }: { profileData: ProfileData; barData: BarData | null }) => {
-  return (
-    <>
+const EmployeeDashboard = ({
+  profileData,
+  barData
+}: {
+  profileData: ProfileData;
+  barData: BarData | null;
+}) => {
+  return <>
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-2xl">Painel do Funcionário</CardTitle>
@@ -270,14 +245,18 @@ const EmployeeDashboard = ({ profileData, barData }: { profileData: ProfileData;
           </div>
         </CardContent>
       </Card>
-    </>
-  );
+    </>;
 };
 
 // Cashier Dashboard Component
-const CashierDashboard = ({ profileData, barData }: { profileData: ProfileData; barData: BarData | null }) => {
-  return (
-    <>
+const CashierDashboard = ({
+  profileData,
+  barData
+}: {
+  profileData: ProfileData;
+  barData: BarData | null;
+}) => {
+  return <>
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-2xl">Painel do Caixa</CardTitle>
@@ -304,38 +283,17 @@ const CashierDashboard = ({ profileData, barData }: { profileData: ProfileData; 
           </div>
         </CardContent>
       </Card>
-    </>
-  );
+    </>;
 };
 
 // Regular User Dashboard Component
-const UserDashboard = ({ profileData }: { profileData: ProfileData }) => {
-  return (
-    <>
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-2xl">Catálogo de Bares</CardTitle>
-          <CardDescription>
-            Explore os bares disponíveis no PedeBar
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-bold mb-4">Seus dados</h3>
-            <div className="space-y-2">
-              <p>
-                <span className="font-medium">Nome:</span> {profileData.full_name || "N/A"}
-              </p>
-              <p>
-                <span className="font-medium">Email:</span> {profileData.email}
-              </p>
-              <p>
-                <span className="font-medium">Função:</span> Usuário
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+const UserDashboard = ({
+  profileData
+}: {
+  profileData: ProfileData;
+}) => {
+  return <>
+      
 
       <Card>
         <CardHeader>
@@ -346,8 +304,6 @@ const UserDashboard = ({ profileData }: { profileData: ProfileData }) => {
           <BarList />
         </CardContent>
       </Card>
-    </>
-  );
+    </>;
 };
-
 export default Dashboard;
