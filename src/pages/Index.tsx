@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
+import { BarList } from "@/components/BarList";
 
 interface IndexProps {
   user: User | null;
@@ -44,7 +45,7 @@ const Index = ({ user, loading }: IndexProps) => {
         <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
           Com o PedeBar, você pode fazer pedidos diretamente da sua mesa sem precisar chamar o garçom.
         </p>
-        <div className="space-x-4">
+        <div className="space-x-4 mb-16">
           <Button className="bg-white text-blue-600 hover:bg-blue-100" size="lg">
             Saiba Mais
           </Button>
@@ -54,6 +55,13 @@ const Index = ({ user, loading }: IndexProps) => {
             </Button>
           </Link>
         </div>
+
+        <section className="mt-16">
+          <h3 className="text-3xl font-bold mb-8">Encontre Bares Parceiros</h3>
+          <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
+            <BarList />
+          </div>
+        </section>
       </main>
 
       <section className="container mx-auto px-6 py-16">

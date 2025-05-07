@@ -11,24 +11,30 @@ export type Database = {
     Tables: {
       bars: {
         Row: {
-          address: string | null
+          active: boolean | null
+          address: string
           created_at: string
           id: string
           name: string
+          phone: string | null
           updated_at: string
         }
         Insert: {
-          address?: string | null
+          active?: boolean | null
+          address: string
           created_at?: string
           id?: string
           name: string
+          phone?: string | null
           updated_at?: string
         }
         Update: {
-          address?: string | null
+          active?: boolean | null
+          address?: string
           created_at?: string
           id?: string
           name?: string
+          phone?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -61,15 +67,7 @@ export type Database = {
           role?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_bar_id_fkey"
-            columns: ["bar_id"]
-            isOneToOne: false
-            referencedRelation: "bars"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
