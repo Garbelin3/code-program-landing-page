@@ -49,8 +49,9 @@ const PedidoConfirmado = () => {
             valor_total: pedidoData.valor_total,
             created_at: pedidoData.created_at,
             bars: {
-              name: pedidoData.bars?.name || "",
-              address: pedidoData.bars?.address || ""
+              // Access bars as an object, not an array
+              name: pedidoData.bars ? pedidoData.bars.name || "" : "",
+              address: pedidoData.bars ? pedidoData.bars.address || "" : ""
             }
           });
         }

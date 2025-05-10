@@ -109,9 +109,10 @@ const MeusPedidos = () => {
               created_at: pedido.created_at,
               valor_total: pedido.valor_total,
               bar: {
-                id: pedido.bars?.id || "",
-                name: pedido.bars?.name || "",
-                address: pedido.bars?.address || ""
+                // Access bars as an object, not an array
+                id: pedido.bars ? pedido.bars.id || "" : "",
+                name: pedido.bars ? pedido.bars.name || "" : "",
+                address: pedido.bars ? pedido.bars.address || "" : ""
               },
               itens: itensData || []
             };
