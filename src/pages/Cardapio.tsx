@@ -1,11 +1,37 @@
 
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { 
+  ArrowLeft, 
+  ShoppingBag, 
+  Filter, 
+  Plus, 
+  Minus 
+} from "lucide-react";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from "@/components/ui/sheet";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 interface Bar {
   id: string;
@@ -22,12 +48,24 @@ interface Produto {
   categoria: string;
 }
 
+interface CartItem extends Produto {
+  quantidade: number;
+}
+
+interface Cart {
+  [barId: string]: CartItem[];
+}
+
 const Cardapio = () => {
   const { barId } = useParams<{ barId: string }>();
+  const navigate = useNavigate();
   const [bar, setBar] = useState<Bar | null>(null);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(true);
   const [categorias, setCategorias] = useState<string[]>([]);
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>("Todos");
+  const [cart, setCart] = useLocalStorage<Cart>("cart", {});
+  const [produtosFiltrados, setProdutosFiltrados] = useState<Produto[]>([]);
   
   useEffect(() => {
     const fetchBarEProdutos = async () => {
@@ -58,7 +96,7 @@ const Cardapio = () => {
         setProdutos(produtosData || []);
         
         // Extrair categorias únicas para organizar o cardápio
-        const categoriasUnicas = [...new Set(produtosData?.map(p => p.categoria) || [])];
+        const categoriasUnicas = ["Todos", ...new Set(produtosData?.map(p => p.categoria) || [])];
         setCategorias(categoriasUnicas);
       } catch (error: any) {
         toast({
@@ -75,11 +113,97 @@ const Cardapio = () => {
     fetchBarEProdutos();
   }, [barId]);
   
+  useEffect(() => {
+    if (categoriaSelecionada === "Todos") {
+      setProdutosFiltrados(produtos);
+    } else {
+      setProdutosFiltrados(produtos.filter(p => p.categoria === categoriaSelecionada));
+    }
+  }, [categoriaSelecionada, produtos]);
+
   const formatarPreco = (preco: number) => {
     return preco.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     });
+  };
+
+  const getQuantidade = (produtoId: string) => {
+    const barCart = cart[barId as string] || [];
+    const item = barCart.find(item => item.id === produtoId);
+    return item ? item.quantidade : 0;
+  };
+
+  const adicionarAoCarrinho = (produto: Produto) => {
+    setCart(prevCart => {
+      const barCart = prevCart[barId as string] || [];
+      const existingItemIndex = barCart.findIndex(item => item.id === produto.id);
+
+      let updatedBarCart;
+      if (existingItemIndex >= 0) {
+        updatedBarCart = [...barCart];
+        updatedBarCart[existingItemIndex] = {
+          ...updatedBarCart[existingItemIndex],
+          quantidade: updatedBarCart[existingItemIndex].quantidade + 1
+        };
+      } else {
+        updatedBarCart = [...barCart, { ...produto, quantidade: 1 }];
+      }
+
+      return { 
+        ...prevCart, 
+        [barId as string]: updatedBarCart 
+      };
+    });
+
+    toast({
+      title: "Produto adicionado",
+      description: `${produto.nome} foi adicionado ao carrinho!`,
+    });
+  };
+
+  const removerDoCarrinho = (produto: Produto) => {
+    setCart(prevCart => {
+      const barCart = prevCart[barId as string] || [];
+      const existingItemIndex = barCart.findIndex(item => item.id === produto.id);
+
+      if (existingItemIndex === -1) return prevCart;
+
+      let updatedBarCart;
+      if (barCart[existingItemIndex].quantidade > 1) {
+        updatedBarCart = [...barCart];
+        updatedBarCart[existingItemIndex] = {
+          ...updatedBarCart[existingItemIndex],
+          quantidade: updatedBarCart[existingItemIndex].quantidade - 1
+        };
+      } else {
+        updatedBarCart = barCart.filter(item => item.id !== produto.id);
+      }
+
+      if (updatedBarCart.length === 0) {
+        const { [barId as string]: _, ...restCart } = prevCart;
+        return restCart;
+      }
+
+      return { 
+        ...prevCart, 
+        [barId as string]: updatedBarCart 
+      };
+    });
+  };
+
+  const getCarrinhoTotal = () => {
+    const barCart = cart[barId as string] || [];
+    return barCart.reduce((total, item) => total + item.quantidade, 0);
+  };
+
+  const getCarrinhoValorTotal = () => {
+    const barCart = cart[barId as string] || [];
+    return barCart.reduce((total, item) => total + (item.preco * item.quantidade), 0);
+  };
+
+  const irParaCheckout = () => {
+    navigate(`/checkout/${barId}`);
   };
   
   if (loading) {
@@ -102,17 +226,40 @@ const Cardapio = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <div className="container mx-auto py-8 px-4">
-        <Button 
-          variant="outline" 
-          className="mb-6"
-          asChild
-        >
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" /> Voltar
-          </Link>
-        </Button>
+        <div className="flex justify-between items-center mb-6">
+          <Button 
+            variant="outline" 
+            asChild
+          >
+            <Link to="/dashboard" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" /> Voltar
+            </Link>
+          </Button>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Filter className="h-4 w-4" /> Categorias
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56">
+              <div className="space-y-2">
+                {categorias.map((categoria) => (
+                  <Button
+                    key={categoria}
+                    variant={categoriaSelecionada === categoria ? "default" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setCategoriaSelecionada(categoria)}
+                  >
+                    {categoria}
+                  </Button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
         
         <Card className="mb-8">
           <CardHeader className="bg-purple-50">
@@ -124,18 +271,18 @@ const Cardapio = () => {
           </CardHeader>
         </Card>
         
-        {produtos.length > 0 ? (
+        {produtosFiltrados.length > 0 ? (
           <div className="space-y-8">
-            {categorias.map(categoria => (
+            {Array.from(new Set(produtosFiltrados.map(p => p.categoria))).map(categoria => (
               <div key={categoria}>
                 <h2 className="text-xl font-bold mb-4 text-purple-800 border-b pb-2">{categoria}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {produtos
+                  {produtosFiltrados
                     .filter(produto => produto.categoria === categoria)
                     .map(produto => (
                       <Card key={produto.id} className="h-full">
                         <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
+                          <div className="flex justify-between items-start mb-4">
                             <div>
                               <h3 className="font-semibold text-lg">{produto.nome}</h3>
                               {produto.descricao && (
@@ -144,6 +291,26 @@ const Cardapio = () => {
                             </div>
                             <div className="text-purple-700 font-bold">
                               {formatarPreco(produto.preco)}
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-end">
+                            <div className="flex items-center gap-3">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                disabled={getQuantidade(produto.id) === 0}
+                                onClick={() => removerDoCarrinho(produto)}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <span className="w-6 text-center">{getQuantidade(produto.id)}</span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => adicionarAoCarrinho(produto)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
                         </CardContent>
@@ -155,10 +322,28 @@ const Cardapio = () => {
           </div>
         ) : (
           <div className="text-center py-10 bg-white rounded-lg shadow">
-            <p className="text-lg text-gray-600">Este bar ainda não possui produtos no cardápio.</p>
+            <p className="text-lg text-gray-600">
+              {categorias.length > 1 
+                ? "Nenhum produto encontrado nesta categoria." 
+                : "Este bar ainda não possui produtos no cardápio."}
+            </p>
           </div>
         )}
       </div>
+
+      {/* Botão flutuante do carrinho */}
+      {getCarrinhoTotal() > 0 && (
+        <div className="fixed bottom-6 right-6">
+          <Button 
+            className="h-14 px-4 rounded-full shadow-lg flex items-center gap-2"
+            onClick={irParaCheckout}
+          >
+            <ShoppingBag className="h-5 w-5" /> 
+            <span>Finalizar ({getCarrinhoTotal()})</span>
+            <span className="ml-1">{formatarPreco(getCarrinhoValorTotal())}</span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

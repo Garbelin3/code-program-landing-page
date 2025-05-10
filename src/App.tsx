@@ -14,6 +14,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Cardapio from "./pages/Cardapio";
+import Checkout from "./pages/Checkout";
+import PedidoConfirmado from "./pages/PedidoConfirmado";
+import MeusPedidos from "./pages/MeusPedidos";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +112,9 @@ const App = () => {
               } 
             />
             <Route path="/cardapio/:barId" element={<Cardapio />} />
+            <Route path="/checkout/:barId" element={<Checkout />} />
+            <Route path="/pedido-confirmado/:pedidoId" element={<PedidoConfirmado />} />
+            <Route path="/meus-pedidos" element={<MeusPedidos />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
