@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,14 +41,12 @@ const PedidoConfirmado = () => {
         
         if (pedidoError) throw pedidoError;
         
-        // Properly handle the data structure
         if (pedidoData) {
           setPedido({
             id: pedidoData.id,
             valor_total: pedidoData.valor_total,
             created_at: pedidoData.created_at,
             bars: {
-              // Access bars directly as an object
               name: pedidoData.bars?.name || "",
               address: pedidoData.bars?.address || ""
             }
