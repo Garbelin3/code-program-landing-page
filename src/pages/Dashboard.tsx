@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogOut } from "lucide-react";
 import { BarList } from "@/components/BarList";
+import { GerenciarCardapio } from "@/components/produtos/GerenciarCardapio";
+
 interface BarData {
   id: string;
   name: string;
@@ -194,8 +196,13 @@ const OwnerDashboard = ({
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="border rounded-md p-4 bg-indigo-50">
-                <h4 className="font-bold text-indigo-700">Gerenciar Cardápio</h4>
+              <div className="border rounded-md p-4 bg-indigo-50 col-span-3">
+                {barData && (
+                  <GerenciarCardapio 
+                    barId={barData.id} 
+                    barName={barData.name} 
+                  />
+                )}
               </div>
               <div className="border rounded-md p-4 bg-purple-50">
                 <h4 className="font-bold text-purple-700">Gerenciar Funcionários</h4>

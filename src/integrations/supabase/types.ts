@@ -39,6 +39,50 @@ export type Database = {
         }
         Relationships: []
       }
+      produtos: {
+        Row: {
+          ativo: boolean
+          bar_id: string
+          categoria: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          preco: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          bar_id: string
+          categoria: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          preco: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          bar_id?: string
+          categoria?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          preco?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           bar_id: string | null
