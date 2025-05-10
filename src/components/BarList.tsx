@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Phone, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 interface Bar {
   id: string;
@@ -122,8 +123,12 @@ export const BarList = () => {
             )}
           </CardContent>
           <CardFooter>
-            <Button size="sm" className="w-full">
-              Ver Cardápio
+            <Button 
+              size="sm" 
+              className="w-full"
+              asChild
+            >
+              <Link to={`/cardapio/${bar.id}`}>Ver Cardápio</Link>
             </Button>
           </CardFooter>
         </Card>

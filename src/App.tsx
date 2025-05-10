@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import Cardapio from "./pages/Cardapio";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,7 @@ const App = () => {
                 )
               } 
             />
+            <Route path="/cardapio/:barId" element={<Cardapio />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
