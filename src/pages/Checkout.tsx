@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -120,8 +121,8 @@ const Checkout = () => {
       // Para simplificar, vamos simular o processo de pagamento
       
       // Salvar o pedido no banco de dados
-      const { data: pedido, error: pedidoError } = await supabase
-        .from('pedidos')
+      const { data: pedido, error: pedidoError } = await supabaseExtended
+        .from("pedidos")
         .insert({
           user_id: user.id,
           bar_id: barId,
@@ -143,8 +144,8 @@ const Checkout = () => {
         nome_produto: item.nome
       }));
       
-      const { error: itensError } = await supabase
-        .from('pedido_itens')
+      const { error: itensError } = await supabaseExtended
+        .from("pedido_itens")
         .insert(itensPedido);
         
       if (itensError) throw itensError;

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ const PedidoConfirmado = () => {
       
       setLoading(true);
       try {
-        const { data: pedidoData, error: pedidoError } = await supabase
+        const { data: pedidoData, error: pedidoError } = await supabaseExtended
           .from("pedidos")
           .select(`
             id,

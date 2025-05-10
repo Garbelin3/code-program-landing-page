@@ -39,6 +39,95 @@ export type Database = {
         }
         Relationships: []
       }
+      pedido_itens: {
+        Row: {
+          created_at: string
+          id: string
+          nome_produto: string
+          pedido_id: string
+          preco_unitario: number
+          produto_id: string
+          quantidade: number
+          quantidade_restante: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome_produto: string
+          pedido_id: string
+          preco_unitario: number
+          produto_id: string
+          quantidade: number
+          quantidade_restante: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome_produto?: string
+          pedido_id?: string
+          preco_unitario?: number
+          produto_id?: string
+          quantidade?: number
+          quantidade_restante?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_itens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos: {
+        Row: {
+          bar_id: string
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+          valor_total: number
+        }
+        Insert: {
+          bar_id: string
+          created_at?: string
+          id?: string
+          status: string
+          updated_at?: string
+          user_id: string
+          valor_total: number
+        }
+        Update: {
+          bar_id?: string
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produtos: {
         Row: {
           ativo: boolean

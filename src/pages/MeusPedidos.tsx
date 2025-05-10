@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,7 @@ const MeusPedidos = () => {
       setLoading(true);
       try {
         // Buscar pedidos
-        const { data: pedidosData, error: pedidosError } = await supabase
+        const { data: pedidosData, error: pedidosError } = await supabaseExtended
           .from("pedidos")
           .select(`
             id, 
@@ -96,7 +97,7 @@ const MeusPedidos = () => {
         // Buscar itens de cada pedido
         const pedidosComItens = await Promise.all(
           (pedidosData || []).map(async (pedido) => {
-            const { data: itensData, error: itensError } = await supabase
+            const { data: itensData, error: itensError } = await supabaseExtended
               .from("pedido_itens")
               .select("*")
               .eq("pedido_id", pedido.id);
@@ -192,7 +193,7 @@ const MeusPedidos = () => {
       
       // Atualizar quantidades restantes
       for (const item of itensParaAtualizar) {
-        const { error } = await supabase
+        const { error } = await supabaseExtended
           .from("pedido_itens")
           .update({ quantidade_restante: item.quantidade_restante })
           .eq("id", item.id);
