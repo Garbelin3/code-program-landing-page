@@ -25,7 +25,7 @@ export interface PedidoItensRow {
 }
 
 // Custom database interface that extends the generated one
-export interface Database extends GeneratedDatabase {
+export interface Database {
   public: {
     Tables: {
       pedidos: {
@@ -39,5 +39,9 @@ export interface Database extends GeneratedDatabase {
         Update: Partial<Omit<PedidoItensRow, 'id' | 'created_at' | 'updated_at'>>;
       };
     } & GeneratedDatabase['public']['Tables'];
+    Views: GeneratedDatabase['public']['Views'];
+    Functions: GeneratedDatabase['public']['Functions'];
+    Enums: GeneratedDatabase['public']['Enums'];
+    CompositeTypes: GeneratedDatabase['public']['CompositeTypes'];
   };
 }

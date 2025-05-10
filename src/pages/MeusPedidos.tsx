@@ -104,9 +104,16 @@ const MeusPedidos = () => {
             
             if (itensError) throw itensError;
             
+            // Explicitly map the data to match our Pedido interface
             return {
-              ...pedido,
-              bar: pedido.bars,
+              id: pedido.id,
+              created_at: pedido.created_at,
+              valor_total: pedido.valor_total,
+              bar: {
+                id: pedido.bars.id,
+                name: pedido.bars.name,
+                address: pedido.bars.address
+              },
               itens: itensData || []
             };
           })

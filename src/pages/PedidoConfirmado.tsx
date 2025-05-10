@@ -8,10 +8,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ShoppingBag } from "lucide-react";
 
+interface PedidoConfirmado {
+  id: string;
+  valor_total: number;
+  created_at: string;
+  bars: {
+    name: string;
+    address: string;
+  };
+}
+
 const PedidoConfirmado = () => {
   const { pedidoId } = useParams<{ pedidoId: string }>();
   const [loading, setLoading] = useState(true);
-  const [pedido, setPedido] = useState<any>(null);
+  const [pedido, setPedido] = useState<PedidoConfirmado | null>(null);
   
   useEffect(() => {
     const fetchPedido = async () => {
