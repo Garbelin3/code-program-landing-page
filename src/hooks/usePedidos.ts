@@ -111,7 +111,7 @@ export const usePedidos = () => {
   
   const iniciarRetirada = (pedido: Pedido) => {
     setSelectedPedido(pedido);
-    agregarItens(pedido);
+    agregarItensDeTodosPedidos();
     
     // Resetar as seleções 
     const initialSelections: Record<string, number> = {};
@@ -120,9 +120,9 @@ export const usePedidos = () => {
     setRetirarSheetOpen(true);
   };
   
-  // Função para agregar itens iguais e calcular o total disponível
-  const agregarItens = (pedido: Pedido) => {
-    // Primeiro vamos coletar todos os itens com quantidade_restante > 0
+  // Função para agregar itens iguais e calcular o total disponível de TODOS os pedidos
+  const agregarItensDeTodosPedidos = () => {
+    // Primeiro vamos coletar todos os itens com quantidade_restante > 0 de TODOS os pedidos
     const itensDisponiveis = pedidos
       .flatMap(p => p.itens)
       .filter(item => item.quantidade_restante > 0);
@@ -144,16 +144,8 @@ export const usePedidos = () => {
     });
     
     // Converter o objeto em array
-    const itensAgregados = Object.values(itensPorNome);
-    
-    // Filtrar apenas os itens relacionados ao pedido selecionado
-    const itensDoPedido = itensAgregados.filter(agregado => 
-      pedido.itens.some(item => 
-        item.nome_produto === agregado.nome_produto && item.quantidade_restante > 0
-      )
-    );
-    
-    setItensAgregados(itensDoPedido);
+    const todosItensAgregados = Object.values(itensPorNome);
+    setItensAgregados(todosItensAgregados);
   };
   
   const gerarCodigoRetirada = () => {
