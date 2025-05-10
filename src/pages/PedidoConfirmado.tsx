@@ -41,7 +41,19 @@ const PedidoConfirmado = () => {
           .single();
         
         if (pedidoError) throw pedidoError;
-        setPedido(pedidoData);
+        
+        // Properly handle the data structure
+        if (pedidoData) {
+          setPedido({
+            id: pedidoData.id,
+            valor_total: pedidoData.valor_total,
+            created_at: pedidoData.created_at,
+            bars: {
+              name: pedidoData.bars?.name || "",
+              address: pedidoData.bars?.address || ""
+            }
+          });
+        }
       } catch (error: any) {
         toast({
           title: "Erro ao carregar informações do pedido",

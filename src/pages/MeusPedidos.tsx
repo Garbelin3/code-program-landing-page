@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,9 +109,9 @@ const MeusPedidos = () => {
               created_at: pedido.created_at,
               valor_total: pedido.valor_total,
               bar: {
-                id: pedido.bars.id,
-                name: pedido.bars.name,
-                address: pedido.bars.address
+                id: pedido.bars?.id || "",
+                name: pedido.bars?.name || "",
+                address: pedido.bars?.address || ""
               },
               itens: itensData || []
             };
