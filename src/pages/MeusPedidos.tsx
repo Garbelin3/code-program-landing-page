@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface PedidoItem {
   id: string;
@@ -43,6 +50,13 @@ interface Pedido {
   itens: PedidoItem[];
 }
 
+// Interface for aggregated items
+interface ItemAgregado {
+  nome_produto: string;
+  itens: PedidoItem[];
+  total_disponivel: number;
+}
+
 const MeusPedidos = () => {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
@@ -53,6 +67,7 @@ const MeusPedidos = () => {
   const [codigoRetirada, setCodigoRetirada] = useState("");
   const [qrVisible, setQrVisible] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [itensAgregados, setItensAgregados] = useState<ItemAgregado[]>([]);
   
   useEffect(() => {
     const getUser = async () => {
@@ -109,10 +124,10 @@ const MeusPedidos = () => {
               created_at: pedido.created_at,
               valor_total: pedido.valor_total,
               bar: {
-                // Access bars as an object, not an array
-                id: pedido.bars ? pedido.bars.id || "" : "",
-                name: pedido.bars ? pedido.bars.name || "" : "",
-                address: pedido.bars ? pedido.bars.address || "" : ""
+                // Access bars directly as an object
+                id: pedido.bars?.id || "",
+                name: pedido.bars?.name || "",
+                address: pedido.bars?.address || ""
               },
               itens: itensData || []
             };
@@ -137,6 +152,42 @@ const MeusPedidos = () => {
     }
   }, [user]);
   
+  // Função para agregar itens iguais e calcular o total disponível
+  const agregarItens = (pedido: Pedido) => {
+    // Primeiro vamos coletar todos os itens com quantidade_restante > 0
+    const itensDisponiveis = pedidos
+      .flatMap(p => p.itens)
+      .filter(item => item.quantidade_restante > 0);
+    
+    // Agrupar por nome de produto
+    const itensPorNome: Record<string, ItemAgregado> = {};
+    
+    itensDisponiveis.forEach(item => {
+      if (!itensPorNome[item.nome_produto]) {
+        itensPorNome[item.nome_produto] = {
+          nome_produto: item.nome_produto,
+          itens: [],
+          total_disponivel: 0
+        };
+      }
+      
+      itensPorNome[item.nome_produto].itens.push(item);
+      itensPorNome[item.nome_produto].total_disponivel += item.quantidade_restante;
+    });
+    
+    // Converter o objeto em array
+    const itensAgregados = Object.values(itensPorNome);
+    
+    // Filtrar apenas os itens relacionados ao pedido selecionado
+    const itensDoPedido = itensAgregados.filter(agregado => 
+      pedido.itens.some(item => 
+        item.nome_produto === agregado.nome_produto && item.quantidade_restante > 0
+      )
+    );
+    
+    setItensAgregados(itensDoPedido);
+  };
+  
   const formatarPreco = (preco: number) => {
     return preco.toLocaleString('pt-BR', {
       style: 'currency',
@@ -157,24 +208,21 @@ const MeusPedidos = () => {
   
   const iniciarRetirada = (pedido: Pedido) => {
     setSelectedPedido(pedido);
+    agregarItens(pedido);
+    
+    // Resetar as seleções 
     const initialSelections: Record<string, number> = {};
-    
-    pedido.itens.forEach(item => {
-      if (item.quantidade_restante > 0) {
-        initialSelections[item.id] = 1; // Iniciar com uma unidade selecionada
-      }
-    });
-    
     setItensSelecionados(initialSelections);
+    
     setRetirarSheetOpen(true);
   };
   
-  const handleQuantidadeChange = (itemId: string, value: string) => {
+  const handleQuantidadeChange = (nomeProduto: string, value: string) => {
     const quantidade = parseInt(value);
     
     setItensSelecionados(prev => ({
       ...prev,
-      [itemId]: quantidade
+      [nomeProduto]: quantidade
     }));
   };
   
@@ -185,51 +233,67 @@ const MeusPedidos = () => {
   };
   
   const confirmarRetirada = async () => {
-    if (!selectedPedido) return;
+    if (!selectedPedido || Object.keys(itensSelecionados).length === 0) return;
     
     try {
-      const itensParaAtualizar = Object.entries(itensSelecionados).map(([itemId, quantidade]) => {
-        const item = selectedPedido.itens.find(i => i.id === itemId);
-        if (!item) return null;
+      // Para cada produto selecionado, precisamos distribuir a quantidade entre os itens disponíveis
+      for (const [nomeProduto, quantidadeTotal] of Object.entries(itensSelecionados)) {
+        let quantidadeRestante = quantidadeTotal;
         
-        return {
-          id: itemId,
-          quantidade_restante: item.quantidade_restante - quantidade
-        };
-      }).filter(Boolean) as { id: string; quantidade_restante: number }[];
-      
-      // Atualizar quantidades restantes
-      for (const item of itensParaAtualizar) {
-        const { error } = await supabaseExtended
-          .from("pedido_itens")
-          .update({ quantidade_restante: item.quantidade_restante })
-          .eq("id", item.id);
+        // Encontrar todos os itens desse produto
+        const item = itensAgregados.find(i => i.nome_produto === nomeProduto);
+        if (!item) continue;
         
-        if (error) throw error;
+        // Para cada item do mesmo produto, retirar a quantidade, começando pelos mais antigos
+        for (const pedidoItem of item.itens.sort((a, b) => a.id.localeCompare(b.id))) {
+          if (quantidadeRestante <= 0) break;
+          
+          // Calcular quanto retirar deste item específico
+          const quantidadeRetirada = Math.min(pedidoItem.quantidade_restante, quantidadeRestante);
+          const novaQuantidade = pedidoItem.quantidade_restante - quantidadeRetirada;
+          
+          // Atualizar no banco de dados
+          const { error } = await supabaseExtended
+            .from("pedido_itens")
+            .update({ quantidade_restante: novaQuantidade })
+            .eq("id", pedidoItem.id);
+          
+          if (error) throw error;
+          
+          // Atualizar localmente para refletir na interface
+          pedidoItem.quantidade_restante = novaQuantidade;
+          
+          // Reduzir a quantidade restante a ser retirada
+          quantidadeRestante -= quantidadeRetirada;
+        }
       }
+      
+      // Atualizar os pedidos no estado
+      setPedidos(prevPedidos => {
+        return prevPedidos.map(pedido => {
+          // Encontrar os itens atualizados que pertencem a este pedido
+          const updatedItems = pedido.itens.map(item => {
+            const agregado = itensAgregados.find(a => a.nome_produto === item.nome_produto);
+            if (!agregado) return item;
+            
+            // Encontrar o item específico nos itens agregados
+            const updatedItem = agregado.itens.find(i => i.id === item.id);
+            if (updatedItem) {
+              return { ...item, quantidade_restante: updatedItem.quantidade_restante };
+            }
+            return item;
+          });
+          
+          return {
+            ...pedido,
+            itens: updatedItems
+          };
+        });
+      });
       
       // Gerar código de retirada
       gerarCodigoRetirada();
       setQrVisible(true);
-      
-      // Atualizar a lista de pedidos
-      setPedidos(prevPedidos => {
-        return prevPedidos.map(pedido => {
-          if (pedido.id === selectedPedido.id) {
-            return {
-              ...pedido,
-              itens: pedido.itens.map(item => {
-                const quantidadeRetirada = itensSelecionados[item.id] || 0;
-                return {
-                  ...item,
-                  quantidade_restante: item.quantidade_restante - quantidadeRetirada
-                };
-              })
-            };
-          }
-          return pedido;
-        });
-      });
       
     } catch (error: any) {
       toast({
@@ -254,6 +318,7 @@ const MeusPedidos = () => {
     setQrVisible(false);
     setCodigoRetirada("");
     setSelectedPedido(null);
+    setItensAgregados([]);
     setItensSelecionados({});
   };
   
@@ -358,24 +423,24 @@ const MeusPedidos = () => {
           {!qrVisible ? (
             <>
               <div className="py-4">
-                {selectedPedido?.itens
-                  .filter(item => item.quantidade_restante > 0)
-                  .map((item) => (
-                    <div key={item.id} className="py-4 border-b">
+                {itensAgregados.length > 0 ? (
+                  itensAgregados.map((item) => (
+                    <div key={item.nome_produto} className="py-4 border-b">
                       <div className="flex justify-between mb-2">
                         <p className="font-medium">{item.nome_produto}</p>
-                        <p className="text-sm text-gray-500">Disponível: {item.quantidade_restante}</p>
+                        <p className="text-sm text-gray-500">Disponível: {item.total_disponivel}</p>
                       </div>
                       
                       <Select 
-                        value={itensSelecionados[item.id]?.toString() || "1"}
-                        onValueChange={(value) => handleQuantidadeChange(item.id, value)}
+                        value={itensSelecionados[item.nome_produto]?.toString() || "0"}
+                        onValueChange={(value) => handleQuantidadeChange(item.nome_produto, value)}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Quantidade" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Array.from({ length: item.quantidade_restante }, (_, i) => i + 1).map((num) => (
+                          <SelectItem value="0">Selecione</SelectItem>
+                          {Array.from({ length: item.total_disponivel }, (_, i) => i + 1).map((num) => (
                             <SelectItem key={num} value={num.toString()}>
                               {num}
                             </SelectItem>
@@ -383,14 +448,18 @@ const MeusPedidos = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                  ))}
+                  ))
+                ) : (
+                  <p className="text-center py-4 text-gray-500">Não há itens disponíveis para retirada</p>
+                )}
               </div>
               
               <SheetFooter className="pt-4">
                 <Button 
                   className="w-full" 
                   onClick={confirmarRetirada}
-                  disabled={Object.keys(itensSelecionados).length === 0}
+                  disabled={Object.keys(itensSelecionados).length === 0 || 
+                    Object.values(itensSelecionados).every(v => v === 0)}
                 >
                   Gerar código de retirada
                 </Button>
