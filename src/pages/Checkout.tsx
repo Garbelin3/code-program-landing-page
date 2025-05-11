@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,8 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, ArrowLeft, Trash } from "lucide-react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { Navbar } from "@/components/Navbar";
-import { useAuth } from "@/hooks/useAuth";
 
 interface Bar {
   id: string;
@@ -31,37 +30,57 @@ interface Cart {
 }
 
 const Checkout = () => {
-  const { barId } = useParams();
+  const { barId } = useParams<{ barId: string }>();
   const navigate = useNavigate();
   const [bar, setBar] = useState<Bar | null>(null);
   const [loading, setLoading] = useState(true);
   const [processando, setProcessando] = useState(false);
   const [cart, setCart] = useLocalStorage<Cart>("cart", {});
-  const { user, signOut } = useAuth();
+  const [user, setUser] = useState<any>(null);
   
   useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+      } else {
+        toast({
+          title: "Login necessário",
+          description: "Você precisa estar logado para finalizar o pedido",
+          variant: "destructive"
+        });
+        navigate('/login');
+      }
+    };
+    
+    getUser();
+  }, [navigate]);
+
+  useEffect(() => {
     const fetchBar = async () => {
+      if (!barId) return;
+      
+      setLoading(true);
       try {
-        const { data, error } = await supabase
+        const { data: barData, error: barError } = await supabase
           .from("bars")
-          .select("*")
+          .select("id, name, address, phone")
           .eq("id", barId)
           .single();
-
-        if (error) throw error;
-        setBar(data);
-      } catch (error) {
-        console.error("Erro ao carregar bar:", error);
+        
+        if (barError) throw barError;
+        setBar(barData);
+      } catch (error: any) {
         toast({
-          title: "Erro ao carregar bar",
-          description: "Não foi possível carregar as informações do bar.",
-          variant: "destructive",
+          title: "Erro ao carregar informações do bar",
+          description: error.message,
+          variant: "destructive"
         });
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchBar();
   }, [barId]);
 
@@ -180,7 +199,6 @@ const Checkout = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar user={user} onLogout={signOut} />
       <div className="container mx-auto py-8 px-4">
         <Button 
           variant="outline" 

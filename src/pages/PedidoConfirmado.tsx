@@ -1,102 +1,68 @@
 
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ShoppingBag } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
-import { useAuth } from "@/hooks/useAuth";
-import { formatarPreco, formatarData } from "@/utils/formatters";
 
 interface PedidoConfirmado {
   id: string;
-  bar: {
+  valor_total: number;
+  created_at: string;
+  bars: {
     name: string;
     address: string;
   };
-  items: {
-    name: string;
-    quantity: number;
-    price: number;
-  }[];
-  total: number;
-  status: string;
-  created_at: string;
-}
-
-interface PedidoResponse {
-  id: string;
-  bar: {
-    name: string;
-    address: string;
-  }[];
-  items: {
-    name: string;
-    quantity: number;
-    price: number;
-  }[];
-  valor_total: number; // Changed from 'total' to 'valor_total' to match the database schema
-  status: string;
-  created_at: string;
 }
 
 const PedidoConfirmado = () => {
-  const { pedidoId } = useParams();
+  const { pedidoId } = useParams<{ pedidoId: string }>();
   const [loading, setLoading] = useState(true);
   const [pedido, setPedido] = useState<PedidoConfirmado | null>(null);
-  const { user, signOut } = useAuth();
   
   useEffect(() => {
     const fetchPedido = async () => {
+      if (!pedidoId) return;
+      
+      setLoading(true);
       try {
-        const { data, error } = await supabase
+        const { data: pedidoData, error: pedidoError } = await supabaseExtended
           .from("pedidos")
           .select(`
             id,
-            bar:bars(name, address),
-            items:pedido_items(
-              name:nome_produto,
-              quantity:quantidade,
-              price:preco_unitario
-            ),
-            valor_total, 
-            status,
-            created_at
+            valor_total,
+            created_at,
+            bars:bar_id (name, address)
           `)
           .eq("id", pedidoId)
           .single();
-
-        if (error) throw error;
         
-        // Only process if data is returned
-        if (data) {
-          const pedidoData = data as unknown as PedidoResponse; // Use type assertion after checking data
+        if (pedidoError) throw pedidoError;
+        
+        if (pedidoData) {
           setPedido({
             id: pedidoData.id,
-            bar: {
-              name: pedidoData.bar?.[0]?.name || "",
-              address: pedidoData.bar?.[0]?.address || ""
-            },
-            items: pedidoData.items || [],
-            total: pedidoData.valor_total, // Changed to match the column name in the database
-            status: pedidoData.status,
-            created_at: pedidoData.created_at
+            valor_total: pedidoData.valor_total,
+            created_at: pedidoData.created_at,
+            bars: {
+              name: pedidoData.bars?.name || "",
+              address: pedidoData.bars?.address || ""
+            }
           });
         }
       } catch (error: any) {
-        console.error("Erro ao carregar pedido:", error);
         toast({
-          title: "Erro ao carregar pedido",
-          description: "Não foi possível carregar as informações do pedido.",
-          variant: "destructive",
+          title: "Erro ao carregar informações do pedido",
+          description: error.message,
+          variant: "destructive"
         });
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchPedido();
   }, [pedidoId]);
   
@@ -119,9 +85,26 @@ const PedidoConfirmado = () => {
     );
   }
   
+  const formatarPreco = (preco: number) => {
+    return preco.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    });
+  };
+  
+  const formatarData = (dataString: string) => {
+    const data = new Date(dataString);
+    return data.toLocaleDateString('pt-BR', { 
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar user={user} onLogout={signOut} />
       <div className="container mx-auto py-8 px-4 max-w-md">
         <Card className="mb-8">
           <CardHeader className="text-center bg-green-50">
@@ -135,18 +118,18 @@ const PedidoConfirmado = () => {
             <div className="space-y-4">
               <div>
                 <p className="text-gray-500 text-sm">Pedido realizado em</p>
-                <p className="font-medium">{formatarData(pedido?.created_at || '')}</p>
+                <p className="font-medium">{formatarData(pedido.created_at)}</p>
               </div>
               
               <div>
                 <p className="text-gray-500 text-sm">Local</p>
-                <p className="font-medium">{pedido?.bar?.name}</p>
-                <p className="text-sm text-gray-600">{pedido?.bar?.address}</p>
+                <p className="font-medium">{pedido.bars.name}</p>
+                <p className="text-sm text-gray-600">{pedido.bars.address}</p>
               </div>
               
               <div>
                 <p className="text-gray-500 text-sm">Valor total</p>
-                <p className="font-bold text-lg">{formatarPreco(pedido?.total || 0)}</p>
+                <p className="font-bold text-lg">{formatarPreco(pedido.valor_total)}</p>
               </div>
               
               <div className="pt-4 flex flex-col gap-3">

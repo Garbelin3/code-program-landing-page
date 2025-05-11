@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LogOut } from "lucide-react";
 import { BarList } from "@/components/BarList";
 import { GerenciarCardapio } from "@/components/produtos/GerenciarCardapio";
-import { Navbar } from "@/components/Navbar";
 
 interface BarData {
   id: string;
@@ -78,18 +77,20 @@ const Dashboard = ({
   }, [profileData, loading, navigate]);
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      const {
+        error
+      } = await supabase.auth.signOut();
+      if (error) throw error;
       navigate("/");
       toast({
-        title: "Logout realizado com sucesso",
-        description: "Você foi desconectado do sistema.",
+        title: "Logout bem-sucedido",
+        description: "Você foi desconectado com sucesso."
       });
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
+    } catch (error: any) {
       toast({
         title: "Erro ao fazer logout",
-        description: "Ocorreu um erro ao tentar sair do sistema.",
-        variant: "destructive",
+        description: error.message,
+        variant: "destructive"
       });
     }
   };
@@ -116,7 +117,22 @@ const Dashboard = ({
     }
   };
   return <div className="min-h-screen bg-gray-50">
-      <Navbar user={user} onLogout={handleLogout} />
+      <header className="bg-white shadow-sm">
+        <div className="container mx-auto py-4 px-6 flex justify-between items-center">
+          <div className="flex items-center">
+            <h1 className="text-2xl font-bold text-gray-900">PedeBar</h1>
+            {profileData && profileData.role !== 'user' && <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                {profileData.role === 'dono' ? 'Dono' : profileData.role === 'funcionario' ? 'Funcionário' : profileData.role === 'caixa' ? 'Caixa' : 'Admin'}
+              </span>}
+          </div>
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
+              <LogOut className="h-4 w-4" /> Sair
+            </Button>
+          </div>
+        </div>
+      </header>
+
       <main className="container mx-auto py-8 px-6">
         {renderDashboardContent()}
       </main>

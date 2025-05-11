@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,8 +32,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { Navbar } from "@/components/Navbar";
-import { useAuth } from "@/hooks/useAuth";
 
 interface Bar {
   id: string;
@@ -67,7 +66,6 @@ const Cardapio = () => {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>("Todos");
   const [cart, setCart] = useLocalStorage<Cart>("cart", {});
   const [produtosFiltrados, setProdutosFiltrados] = useState<Produto[]>([]);
-  const { user, signOut } = useAuth();
   
   useEffect(() => {
     const fetchBarEProdutos = async () => {
@@ -229,7 +227,6 @@ const Cardapio = () => {
   
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      <Navbar user={user} onLogout={signOut} />
       <div className="container mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-6">
           <Button 

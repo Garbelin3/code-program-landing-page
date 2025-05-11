@@ -4,17 +4,26 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PedidoCard } from "@/components/pedidos/PedidoCard";
 import { EmptyPedidos } from "@/components/pedidos/EmptyPedidos";
+import { RetiradaSheet } from "@/components/pedidos/RetiradaSheet";
 import { usePedidos } from "@/hooks/usePedidos";
-import { Navbar } from "@/components/Navbar";
-import { useAuth } from "@/hooks/useAuth";
 
 const MeusPedidos = () => {
-  const { user, signOut } = useAuth();
   const { 
     pedidos, 
-    loading,
+    loading, 
+    selectedPedido,
+    itensSelecionados,
+    retirarSheetOpen,
+    codigoRetirada,
+    qrVisible,
+    itensAgregados,
     formatarPreco,
-    formatarData
+    formatarData,
+    iniciarRetirada,
+    confirmarRetirada,
+    fecharSheet,
+    setRetirarSheetOpen,
+    setItensSelecionados
   } = usePedidos();
   
   if (loading) {
@@ -27,7 +36,6 @@ const MeusPedidos = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar user={user} onLogout={signOut} />
       <div className="container mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-6">
           <Button 
@@ -50,6 +58,7 @@ const MeusPedidos = () => {
               <PedidoCard
                 key={pedido.id}
                 pedido={pedido}
+                iniciarRetirada={iniciarRetirada}
                 formatarPreco={formatarPreco}
                 formatarData={formatarData}
               />
@@ -57,6 +66,19 @@ const MeusPedidos = () => {
           </div>
         )}
       </div>
+      
+      <RetiradaSheet 
+        open={retirarSheetOpen}
+        setOpen={setRetirarSheetOpen}
+        selectedPedido={selectedPedido}
+        itensAgregados={itensAgregados}
+        itensSelecionados={itensSelecionados}
+        codigoRetirada={codigoRetirada}
+        qrVisible={qrVisible}
+        onConfirmarRetirada={confirmarRetirada}
+        onClose={fecharSheet}
+        setItensSelecionados={setItensSelecionados}
+      />
     </div>
   );
 };
