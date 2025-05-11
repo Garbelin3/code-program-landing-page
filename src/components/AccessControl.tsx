@@ -24,8 +24,7 @@ export const AccessControl = ({
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-          toast({
-            title: "Acesso negado",
+          toast("Acesso negado", {
             description: "Você precisa estar logado para acessar esta página",
           });
           setHasAccess(false);
@@ -40,8 +39,7 @@ export const AccessControl = ({
           .single();
 
         if (error || !profileData) {
-          toast({
-            title: "Erro ao verificar permissões",
+          toast("Erro ao verificar permissões", {
             description: error?.message || "Perfil não encontrado",
           });
           setHasAccess(false);
@@ -53,8 +51,7 @@ export const AccessControl = ({
         setHasAccess(hasPermission);
         
         if (!hasPermission) {
-          toast({
-            title: "Acesso restrito",
+          toast("Acesso restrito", {
             description: "Você não tem permissão para acessar esta página",
           });
         }

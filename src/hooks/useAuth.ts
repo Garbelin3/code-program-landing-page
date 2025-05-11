@@ -32,14 +32,12 @@ export const useAuth = () => {
     try {
       await supabase.auth.signOut();
       navigate("/");
-      toast({
-        title: "Logout realizado com sucesso",
+      toast("Logout realizado com sucesso", {
         description: "Você foi desconectado do sistema.",
       });
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      toast({
-        title: "Erro ao fazer logout",
+      toast("Erro ao fazer logout", {
         description: "Ocorreu um erro ao tentar sair do sistema.",
         variant: "destructive",
       });
