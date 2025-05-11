@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, ShoppingBag } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
+import { formatarPreco, formatarData } from "@/utils/formatters";
 
 interface PedidoConfirmado {
   id: string;
@@ -30,13 +31,13 @@ interface PedidoResponse {
   bar: {
     name: string;
     address: string;
-  };
+  }[];
   items: {
     name: string;
     quantity: number;
     price: number;
   }[];
-  total: number;
+  valor_total: number; // Changed from 'total' to 'valor_total' to match the database schema
   status: string;
   created_at: string;
 }
@@ -56,11 +57,11 @@ const PedidoConfirmado = () => {
             id,
             bar:bars(name, address),
             items:pedido_items(
-              name,
-              quantity,
-              price
+              name:nome_produto,
+              quantity:quantidade,
+              price:preco_unitario
             ),
-            total,
+            valor_total, 
             status,
             created_at
           `)
@@ -69,21 +70,22 @@ const PedidoConfirmado = () => {
 
         if (error) throw error;
         
+        // Only process if data is returned
         if (data) {
-          const pedidoData = data as PedidoResponse;
+          const pedidoData = data as unknown as PedidoResponse; // Use type assertion after checking data
           setPedido({
             id: pedidoData.id,
             bar: {
               name: pedidoData.bar?.[0]?.name || "",
               address: pedidoData.bar?.[0]?.address || ""
             },
-            items: pedidoData.items,
-            total: pedidoData.total,
+            items: pedidoData.items || [],
+            total: pedidoData.valor_total, // Changed to match the column name in the database
             status: pedidoData.status,
             created_at: pedidoData.created_at
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Erro ao carregar pedido:", error);
         toast({
           title: "Erro ao carregar pedido",
@@ -116,24 +118,6 @@ const PedidoConfirmado = () => {
       </div>
     );
   }
-  
-  const formatarPreco = (preco: number) => {
-    return preco.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    });
-  };
-  
-  const formatarData = (dataString: string) => {
-    const data = new Date(dataString);
-    return data.toLocaleDateString('pt-BR', { 
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
   
   return (
     <div className="min-h-screen bg-gray-50">
