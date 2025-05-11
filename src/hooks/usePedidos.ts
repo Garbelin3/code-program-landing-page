@@ -64,9 +64,9 @@ export const usePedidos = () => {
               created_at: pedido.created_at,
               valor_total: pedido.valor_total,
               bar: {
-                id: pedido.bars?.id || "",
-                name: pedido.bars?.name || "",
-                address: pedido.bars?.address || ""
+                id: pedido.bars?.[0]?.id || "",
+                name: pedido.bars?.[0]?.name || "",
+                address: pedido.bars?.[0]?.address || ""
               },
               itens: itensData || []
             };

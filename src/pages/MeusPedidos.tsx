@@ -1,9 +1,9 @@
+
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PedidoCard } from "@/components/pedidos/PedidoCard";
 import { EmptyPedidos } from "@/components/pedidos/EmptyPedidos";
-import { RetiradaSheet } from "@/components/pedidos/RetiradaSheet";
 import { usePedidos } from "@/hooks/usePedidos";
 import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,20 +12,9 @@ const MeusPedidos = () => {
   const { user, signOut } = useAuth();
   const { 
     pedidos, 
-    loading, 
-    selectedPedido,
-    itensSelecionados,
-    retirarSheetOpen,
-    codigoRetirada,
-    qrVisible,
-    itensAgregados,
+    loading,
     formatarPreco,
-    formatarData,
-    iniciarRetirada,
-    confirmarRetirada,
-    fecharSheet,
-    setRetirarSheetOpen,
-    setItensSelecionados
+    formatarData
   } = usePedidos();
   
   if (loading) {
@@ -61,7 +50,6 @@ const MeusPedidos = () => {
               <PedidoCard
                 key={pedido.id}
                 pedido={pedido}
-                iniciarRetirada={iniciarRetirada}
                 formatarPreco={formatarPreco}
                 formatarData={formatarData}
               />
@@ -69,19 +57,6 @@ const MeusPedidos = () => {
           </div>
         )}
       </div>
-      
-      <RetiradaSheet 
-        open={retirarSheetOpen}
-        setOpen={setRetirarSheetOpen}
-        selectedPedido={selectedPedido}
-        itensAgregados={itensAgregados}
-        itensSelecionados={itensSelecionados}
-        codigoRetirada={codigoRetirada}
-        qrVisible={qrVisible}
-        onConfirmarRetirada={confirmarRetirada}
-        onClose={fecharSheet}
-        setItensSelecionados={setItensSelecionados}
-      />
     </div>
   );
 };

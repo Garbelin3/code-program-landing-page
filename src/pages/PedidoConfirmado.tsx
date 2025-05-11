@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,8 +74,8 @@ const PedidoConfirmado = () => {
           setPedido({
             id: pedidoData.id,
             bar: {
-              name: pedidoData.bar.name,
-              address: pedidoData.bar.address
+              name: pedidoData.bar?.[0]?.name || "",
+              address: pedidoData.bar?.[0]?.address || ""
             },
             items: pedidoData.items,
             total: pedidoData.total,
@@ -150,18 +151,18 @@ const PedidoConfirmado = () => {
             <div className="space-y-4">
               <div>
                 <p className="text-gray-500 text-sm">Pedido realizado em</p>
-                <p className="font-medium">{formatarData(pedido.created_at)}</p>
+                <p className="font-medium">{formatarData(pedido?.created_at || '')}</p>
               </div>
               
               <div>
                 <p className="text-gray-500 text-sm">Local</p>
-                <p className="font-medium">{pedido.bar.name}</p>
-                <p className="text-sm text-gray-600">{pedido.bar.address}</p>
+                <p className="font-medium">{pedido?.bar?.name}</p>
+                <p className="text-sm text-gray-600">{pedido?.bar?.address}</p>
               </div>
               
               <div>
                 <p className="text-gray-500 text-sm">Valor total</p>
-                <p className="font-bold text-lg">{formatarPreco(pedido.total)}</p>
+                <p className="font-bold text-lg">{formatarPreco(pedido?.total || 0)}</p>
               </div>
               
               <div className="pt-4 flex flex-col gap-3">
