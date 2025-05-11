@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +35,7 @@ export const OrderManagement = () => {
     // Add a small delay to ensure the DOM element is ready
     setTimeout(() => {
       try {
-        const qrScanner = new HTML5QrcodeScanner(
+        const qrScanner = new Html5QrcodeScanner(
           "qr-reader", 
           { fps: 10, qrbox: 250 },
           /* verbose= */ false);

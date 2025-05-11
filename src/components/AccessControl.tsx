@@ -1,17 +1,16 @@
 
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-interface AccessControlProps {
-  children: React.ReactNode;
+export interface AccessControlProps {
+  children?: React.ReactNode;
   allowedRoles: string[];
   redirectTo: string;
 }
 
 export const AccessControl = ({ 
-  children, 
   allowedRoles, 
   redirectTo 
 }: AccessControlProps) => {
@@ -60,5 +59,5 @@ export const AccessControl = ({
     checkUserAccess();
   }, [navigate, allowedRoles, redirectTo]);
 
-  return <>{children}</>;
+  return <Outlet />;
 };

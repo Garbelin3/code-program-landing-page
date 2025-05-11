@@ -21,11 +21,11 @@ function App() {
     <>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Dashboard user={user} />} />
         
         {/* Protected routes */}
-        <Route element={<AccessControl allowedRoles={['customer']} loading={loading} />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+        <Route element={<AccessControl allowedRoles={['customer']} redirectTo="/" />}>
+          <Route path="/dashboard" element={<Dashboard user={user} />} />
           <Route path="/cardapio/:barId" element={<Cardapio />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/pedido-confirmado/:pedidoId" element={<PedidoConfirmado />} />
@@ -35,7 +35,7 @@ function App() {
         </Route>
         
         {/* Employee routes */}
-        <Route element={<AccessControl allowedRoles={['employee', 'admin']} loading={loading} />}>
+        <Route element={<AccessControl allowedRoles={['employee', 'admin']} redirectTo="/" />}>
           <Route path="/gerenciar-pedidos" element={<GerenciarPedidos />} />
         </Route>
         
