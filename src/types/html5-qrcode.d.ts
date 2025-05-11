@@ -5,7 +5,7 @@ declare module "html5-qrcode" {
       elementId: string,
       config: {
         fps: number;
-        qrbox: number;
+        qrbox: number | { width: number; height: number };
       },
       verbose: boolean
     );
@@ -22,7 +22,7 @@ declare module "html5-qrcode" {
       cameraId: string,
       config: {
         fps: number;
-        qrbox: number;
+        qrbox: number | { width: number; height: number };
       },
       onScanSuccess: (decodedText: string, decodedResult?: any) => void,
       onScanFailure?: (error: any) => void
