@@ -9,6 +9,7 @@ import { CheckCircle, ShoppingBag } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { formatarPreco, formatarData } from "@/utils/formatters";
+import { QRCodeDisplay } from "@/components/pedidos/QRCodeDisplay";
 
 interface PedidoConfirmado {
   id: string;
@@ -24,6 +25,7 @@ interface PedidoConfirmado {
   total: number;
   status: string;
   created_at: string;
+  codigo_retirada?: string;
 }
 
 interface PedidoResponse {
@@ -40,6 +42,7 @@ interface PedidoResponse {
   valor_total: number; // Changed from 'total' to 'valor_total' to match the database schema
   status: string;
   created_at: string;
+  codigo_retirada?: string;
 }
 
 const PedidoConfirmado = () => {
@@ -63,7 +66,8 @@ const PedidoConfirmado = () => {
             ),
             valor_total, 
             status,
-            created_at
+            created_at,
+            codigo_retirada
           `)
           .eq("id", pedidoId)
           .single();
@@ -82,7 +86,8 @@ const PedidoConfirmado = () => {
             items: pedidoData.items || [],
             total: pedidoData.valor_total, // Changed to match the column name in the database
             status: pedidoData.status,
-            created_at: pedidoData.created_at
+            created_at: pedidoData.created_at,
+            codigo_retirada: pedidoData.codigo_retirada
           });
         }
       } catch (error: any) {
@@ -148,6 +153,16 @@ const PedidoConfirmado = () => {
                 <p className="text-gray-500 text-sm">Valor total</p>
                 <p className="font-bold text-lg">{formatarPreco(pedido?.total || 0)}</p>
               </div>
+              
+              {pedido.codigo_retirada && (
+                <div className="py-4 border-t border-dashed border-gray-200">
+                  <p className="text-center text-gray-500 text-sm mb-3">Código de retirada</p>
+                  <QRCodeDisplay code={pedido.codigo_retirada} />
+                  <p className="text-center text-xs text-gray-500 mt-3">
+                    Apresente este código no local para retirar seu pedido
+                  </p>
+                </div>
+              )}
               
               <div className="pt-4 flex flex-col gap-3">
                 <Button asChild className="w-full">
