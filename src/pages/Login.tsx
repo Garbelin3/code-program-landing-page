@@ -1,19 +1,16 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-
+import { toast } from "@/hooks/use-toast";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [creatingAdmin, setCreatingAdmin] = useState(false);
   const navigate = useNavigate();
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -27,43 +24,39 @@ const Login = () => {
         email,
         password
       });
-      
       if (error) {
         throw error;
       }
 
-      if (!session) {
-        throw new Error("Falha ao obter sessão");
-      }
-
-      // Buscar o perfil do usuário para obter o papel
+      // Fetch the user's profile to get their role
       const {
         data: profileData,
         error: profileError
-      } = await supabase.from("profiles").select("role, bar_id").eq("id", session.user.id).single();
-      
+      } = await supabase.from("profiles").select("role, bar_id").eq("id", session?.user.id).single();
       if (profileError) {
         throw profileError;
       }
-
-      toast("Login bem-sucedido", {
+      toast({
+        title: "Login bem-sucedido",
         description: "Você foi autenticado com sucesso!"
       });
-      
-      console.log("Login bem-sucedido, role:", profileData.role);
 
-      // Redirecionar com base no papel
-      navigate("/dashboard");
+      // Redirect based on role
+      if (profileData.role === 'user') {
+        navigate("/dashboard"); // Regular users go to catalog/dashboard
+      } else {
+        navigate("/dashboard"); // Professional users will be redirected in the Dashboard component
+      }
     } catch (error: any) {
-      console.error("Erro no login:", error);
-      toast.error("Erro ao fazer login", {
-        description: error.message || "Ocorreu um erro ao tentar fazer login",
+      toast({
+        title: "Erro ao fazer login",
+        description: error.message,
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
   const createAdminUser = async () => {
     setCreatingAdmin(true);
     try {
@@ -74,7 +67,8 @@ const Login = () => {
       if (error) {
         throw error;
       }
-      toast("Usuário administrador criado", {
+      toast({
+        title: "Usuário administrador criado",
         description: "Usuário administrador criado com sucesso! Email: admin@codeprogram.com.br, Senha: codeprogram2025@Admin"
       });
 
@@ -82,14 +76,15 @@ const Login = () => {
       setEmail("admin@codeprogram.com.br");
       setPassword("codeprogram2025@Admin");
     } catch (error: any) {
-      toast.error("Erro ao criar usuário administrador", {
+      toast({
+        title: "Erro ao criar usuário administrador",
         description: error.message || "Ocorreu um erro ao criar o usuário administrador.",
+        variant: "destructive"
       });
     } finally {
       setCreatingAdmin(false);
     }
   };
-
   return <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-blue-500 to-purple-600 p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
         <div className="text-center mb-6">
@@ -128,5 +123,4 @@ const Login = () => {
       </div>
     </div>;
 };
-
 export default Login;

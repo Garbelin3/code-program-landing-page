@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -32,15 +31,16 @@ export const useAuth = () => {
     try {
       await supabase.auth.signOut();
       navigate("/");
-      toast("Logout realizado com sucesso", {
+      toast({
+        title: "Logout realizado com sucesso",
         description: "Você foi desconectado do sistema.",
       });
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      // The `sonner` library doesn't accept 'variant' directly
-      // Using proper type for error toasts
-      toast.error("Erro ao fazer logout", {
+      toast({
+        title: "Erro ao fazer logout",
         description: "Ocorreu um erro ao tentar sair do sistema.",
+        variant: "destructive",
       });
     }
   };
@@ -50,4 +50,4 @@ export const useAuth = () => {
     loading,
     signOut,
   };
-};
+}; 
