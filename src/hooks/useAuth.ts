@@ -37,9 +37,10 @@ export const useAuth = () => {
       });
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-      toast("Erro ao fazer logout", {
+      // The `sonner` library doesn't accept 'variant' directly
+      // Using proper type for error toasts
+      toast.error("Erro ao fazer logout", {
         description: "Ocorreu um erro ao tentar sair do sistema.",
-        variant: "destructive",
       });
     }
   };
