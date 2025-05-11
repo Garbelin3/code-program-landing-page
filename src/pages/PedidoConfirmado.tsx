@@ -1,68 +1,99 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { supabaseExtended } from "@/integrations/supabase/customClient";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ShoppingBag } from "lucide-react";
+import { Navbar } from "@/components/Navbar";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PedidoConfirmado {
   id: string;
-  valor_total: number;
-  created_at: string;
-  bars: {
+  bar: {
     name: string;
     address: string;
   };
+  items: {
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
+  total: number;
+  status: string;
+  created_at: string;
+}
+
+interface PedidoResponse {
+  id: string;
+  bar: {
+    name: string;
+    address: string;
+  };
+  items: {
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
+  total: number;
+  status: string;
+  created_at: string;
 }
 
 const PedidoConfirmado = () => {
-  const { pedidoId } = useParams<{ pedidoId: string }>();
+  const { pedidoId } = useParams();
   const [loading, setLoading] = useState(true);
   const [pedido, setPedido] = useState<PedidoConfirmado | null>(null);
+  const { user, signOut } = useAuth();
   
   useEffect(() => {
     const fetchPedido = async () => {
-      if (!pedidoId) return;
-      
-      setLoading(true);
       try {
-        const { data: pedidoData, error: pedidoError } = await supabaseExtended
+        const { data, error } = await supabase
           .from("pedidos")
           .select(`
             id,
-            valor_total,
-            created_at,
-            bars:bar_id (name, address)
+            bar:bars(name, address),
+            items:pedido_items(
+              name,
+              quantity,
+              price
+            ),
+            total,
+            status,
+            created_at
           `)
           .eq("id", pedidoId)
           .single();
+
+        if (error) throw error;
         
-        if (pedidoError) throw pedidoError;
-        
-        if (pedidoData) {
+        if (data) {
+          const pedidoData = data as PedidoResponse;
           setPedido({
             id: pedidoData.id,
-            valor_total: pedidoData.valor_total,
-            created_at: pedidoData.created_at,
-            bars: {
-              name: pedidoData.bars?.name || "",
-              address: pedidoData.bars?.address || ""
-            }
+            bar: {
+              name: pedidoData.bar.name,
+              address: pedidoData.bar.address
+            },
+            items: pedidoData.items,
+            total: pedidoData.total,
+            status: pedidoData.status,
+            created_at: pedidoData.created_at
           });
         }
-      } catch (error: any) {
+      } catch (error) {
+        console.error("Erro ao carregar pedido:", error);
         toast({
-          title: "Erro ao carregar informações do pedido",
-          description: error.message,
-          variant: "destructive"
+          title: "Erro ao carregar pedido",
+          description: "Não foi possível carregar as informações do pedido.",
+          variant: "destructive",
         });
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchPedido();
   }, [pedidoId]);
   
@@ -105,6 +136,7 @@ const PedidoConfirmado = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navbar user={user} onLogout={signOut} />
       <div className="container mx-auto py-8 px-4 max-w-md">
         <Card className="mb-8">
           <CardHeader className="text-center bg-green-50">
@@ -123,13 +155,13 @@ const PedidoConfirmado = () => {
               
               <div>
                 <p className="text-gray-500 text-sm">Local</p>
-                <p className="font-medium">{pedido.bars.name}</p>
-                <p className="text-sm text-gray-600">{pedido.bars.address}</p>
+                <p className="font-medium">{pedido.bar.name}</p>
+                <p className="text-sm text-gray-600">{pedido.bar.address}</p>
               </div>
               
               <div>
                 <p className="text-gray-500 text-sm">Valor total</p>
-                <p className="font-bold text-lg">{formatarPreco(pedido.valor_total)}</p>
+                <p className="font-bold text-lg">{formatarPreco(pedido.total)}</p>
               </div>
               
               <div className="pt-4 flex flex-col gap-3">
