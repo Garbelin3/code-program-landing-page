@@ -27,7 +27,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
-        {/* Protected routes */}
+        {/* Protected routes para usuários comuns */}
         <Route element={<AccessControl allowedRoles={['customer', 'user']} redirectTo="/login" />}>
           <Route path="/dashboard" element={<Dashboard user={user} />} />
           <Route path="/cardapio/:barId" element={<Cardapio />} />
@@ -38,9 +38,10 @@ function App() {
           <Route path="/retirada/:pedidoId" element={<PedidoRetirada />} />
         </Route>
         
-        {/* Employee routes */}
+        {/* Routes para funcionários do bar */}
         <Route element={<AccessControl allowedRoles={['employee', 'admin', 'dono', 'funcionario', 'caixa']} redirectTo="/login" />}>
           <Route path="/gerenciar-pedidos" element={<GerenciarPedidos />} />
+          <Route path="/dashboard" element={<Dashboard user={user} />} />
         </Route>
         
         {/* Catch-all route */}

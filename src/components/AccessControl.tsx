@@ -23,6 +23,7 @@ export const AccessControl = ({
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
+          console.log("Sem sessão ativa, redirecionando para", redirectTo);
           toast("Acesso negado", {
             description: "Você precisa estar logado para acessar esta página",
           });
@@ -31,6 +32,7 @@ export const AccessControl = ({
           return;
         }
 
+        console.log("Verificando perfil para o usuário:", session.user.id);
         const { data: profileData, error } = await supabase
           .from("profiles")
           .select("role")
@@ -38,6 +40,7 @@ export const AccessControl = ({
           .single();
 
         if (error || !profileData) {
+          console.error("Erro ao buscar perfil:", error);
           toast.error("Erro ao verificar permissões", {
             description: error?.message || "Perfil não encontrado",
           });
@@ -46,13 +49,17 @@ export const AccessControl = ({
           return;
         }
 
+        console.log("Perfil encontrado, role:", profileData.role, "Roles permitidas:", allowedRoles);
         const hasPermission = allowedRoles.includes(profileData.role);
         setHasAccess(hasPermission);
         
         if (!hasPermission) {
+          console.log("Usuário não tem permissão, redirecionando para", redirectTo);
           toast("Acesso restrito", {
             description: "Você não tem permissão para acessar esta página",
           });
+        } else {
+          console.log("Acesso permitido para a rota");
         }
         
         setChecking(false);
