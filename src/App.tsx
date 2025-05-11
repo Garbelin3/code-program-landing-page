@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { AccessControl } from './components/AccessControl';
@@ -11,8 +10,9 @@ import MeusPedidos from './pages/MeusPedidos';
 import PedidoDetalhes from './pages/PedidoDetalhes';
 import PedidoRetirada from './pages/PedidoRetirada';
 import NotFound from './pages/NotFound';
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/sonner";
 import GerenciarPedidos from './pages/GerenciarPedidos';
+import Index from './pages/Index';
 
 function App() {
   const { user, loading } = useAuth();
@@ -21,10 +21,10 @@ function App() {
     <>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<Dashboard user={user} />} />
+        <Route path="/" element={<Index user={user} loading={loading} />} />
         
         {/* Protected routes */}
-        <Route element={<AccessControl allowedRoles={['customer']} redirectTo="/" />}>
+        <Route element={<AccessControl allowedRoles={['customer', 'user']} redirectTo="/" />}>
           <Route path="/dashboard" element={<Dashboard user={user} />} />
           <Route path="/cardapio/:barId" element={<Cardapio />} />
           <Route path="/checkout" element={<Checkout />} />
