@@ -13,6 +13,8 @@ import NotFound from './pages/NotFound';
 import { Toaster } from "@/components/ui/sonner";
 import GerenciarPedidos from './pages/GerenciarPedidos';
 import Index from './pages/Index';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 function App() {
   const { user, loading } = useAuth();
@@ -22,6 +24,8 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Index user={user} loading={loading} />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         
         {/* Protected routes */}
         <Route element={<AccessControl allowedRoles={['customer', 'user']} redirectTo="/" />}>

@@ -1,8 +1,8 @@
 
-import { useEffect } from 'react';
-import { useNavigate, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, Outlet, Navigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export interface AccessControlProps {
   children?: React.ReactNode;
@@ -15,49 +15,66 @@ export const AccessControl = ({
   redirectTo 
 }: AccessControlProps) => {
   const navigate = useNavigate();
+  const [checking, setChecking] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
     const checkUserAccess = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Acesso negado",
-          description: "Você precisa estar logado para acessar esta página",
-          variant: "destructive",
-        });
-        navigate('/login');
-        return;
-      }
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          toast({
+            title: "Acesso negado",
+            description: "Você precisa estar logado para acessar esta página",
+          });
+          setHasAccess(false);
+          setChecking(false);
+          return;
+        }
 
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .single();
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
 
-      if (error || !profileData) {
-        toast({
-          title: "Erro ao verificar permissões",
-          description: error?.message || "Perfil não encontrado",
-          variant: "destructive",
-        });
-        navigate('/login');
-        return;
-      }
+        if (error || !profileData) {
+          toast({
+            title: "Erro ao verificar permissões",
+            description: error?.message || "Perfil não encontrado",
+          });
+          setHasAccess(false);
+          setChecking(false);
+          return;
+        }
 
-      if (!allowedRoles.includes(profileData.role)) {
-        toast({
-          title: "Acesso restrito",
-          description: "Você não tem permissão para acessar esta página",
-          variant: "destructive",
-        });
-        navigate(redirectTo);
+        const hasPermission = allowedRoles.includes(profileData.role);
+        setHasAccess(hasPermission);
+        
+        if (!hasPermission) {
+          toast({
+            title: "Acesso restrito",
+            description: "Você não tem permissão para acessar esta página",
+          });
+        }
+        
+        setChecking(false);
+      } catch (error) {
+        console.error("Erro ao verificar acesso:", error);
+        setHasAccess(false);
+        setChecking(false);
       }
     };
 
     checkUserAccess();
   }, [navigate, allowedRoles, redirectTo]);
 
-  return <Outlet />;
+  if (checking) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <p className="text-lg">Verificando permissões...</p>
+    </div>;
+  }
+
+  return hasAccess ? <Outlet /> : <Navigate to={redirectTo} replace />;
 };
