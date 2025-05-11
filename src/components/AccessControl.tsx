@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { useNavigate, Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -14,7 +14,6 @@ export const AccessControl = ({
   allowedRoles, 
   redirectTo 
 }: AccessControlProps) => {
-  const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
 
@@ -39,7 +38,7 @@ export const AccessControl = ({
           .single();
 
         if (error || !profileData) {
-          toast("Erro ao verificar permissões", {
+          toast.error("Erro ao verificar permissões", {
             description: error?.message || "Perfil não encontrado",
           });
           setHasAccess(false);
@@ -65,7 +64,7 @@ export const AccessControl = ({
     };
 
     checkUserAccess();
-  }, [navigate, allowedRoles, redirectTo]);
+  }, [allowedRoles, redirectTo]);
 
   if (checking) {
     return <div className="flex items-center justify-center min-h-screen">

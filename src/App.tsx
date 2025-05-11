@@ -10,7 +10,7 @@ import MeusPedidos from './pages/MeusPedidos';
 import PedidoDetalhes from './pages/PedidoDetalhes';
 import PedidoRetirada from './pages/PedidoRetirada';
 import NotFound from './pages/NotFound';
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
 import GerenciarPedidos from './pages/GerenciarPedidos';
 import Index from './pages/Index';
 import Login from './pages/Login';
@@ -28,7 +28,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         
         {/* Protected routes */}
-        <Route element={<AccessControl allowedRoles={['customer', 'user']} redirectTo="/" />}>
+        <Route element={<AccessControl allowedRoles={['customer', 'user']} redirectTo="/login" />}>
           <Route path="/dashboard" element={<Dashboard user={user} />} />
           <Route path="/cardapio/:barId" element={<Cardapio />} />
           <Route path="/checkout" element={<Checkout />} />
@@ -39,7 +39,7 @@ function App() {
         </Route>
         
         {/* Employee routes */}
-        <Route element={<AccessControl allowedRoles={['employee', 'admin']} redirectTo="/" />}>
+        <Route element={<AccessControl allowedRoles={['employee', 'admin', 'dono', 'funcionario', 'caixa']} redirectTo="/login" />}>
           <Route path="/gerenciar-pedidos" element={<GerenciarPedidos />} />
         </Route>
         
