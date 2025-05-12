@@ -11,6 +11,7 @@ interface PedidoConfirmado {
   id: string;
   valor_total: number;
   created_at: string;
+  status: string;
   bars: {
     name: string;
     address: string;
@@ -34,6 +35,7 @@ const PedidoConfirmado = () => {
             id,
             valor_total,
             created_at,
+            status,
             bars:bar_id (name, address)
           `)
           .eq("id", pedidoId)
@@ -42,10 +44,25 @@ const PedidoConfirmado = () => {
         if (pedidoError) throw pedidoError;
         
         if (pedidoData) {
+          // Update the pedido status to 'pago' if it was 'pendente'
+          if (pedidoData.status === 'pendente') {
+            const { error: updateError } = await supabaseExtended
+              .from("pedidos")
+              .update({ status: 'pago' })
+              .eq("id", pedidoId);
+            
+            if (updateError) {
+              console.error("Erro ao atualizar status do pedido:", updateError);
+            } else {
+              pedidoData.status = 'pago';
+            }
+          }
+          
           setPedido({
             id: pedidoData.id,
             valor_total: pedidoData.valor_total,
             created_at: pedidoData.created_at,
+            status: pedidoData.status,
             bars: {
               name: pedidoData.bars?.name || "",
               address: pedidoData.bars?.address || ""
@@ -125,6 +142,13 @@ const PedidoConfirmado = () => {
                 <p className="text-gray-500 text-sm">Local</p>
                 <p className="font-medium">{pedido.bars.name}</p>
                 <p className="text-sm text-gray-600">{pedido.bars.address}</p>
+              </div>
+              
+              <div>
+                <p className="text-gray-500 text-sm">Status do pagamento</p>
+                <p className="font-bold text-green-600">
+                  {pedido.status === 'pago' ? 'Pago' : 'Pendente'}
+                </p>
               </div>
               
               <div>

@@ -6,7 +6,7 @@ import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, ArrowLeft, Trash } from "lucide-react";
+import { ShoppingBag, ArrowLeft, Trash, CreditCard } from "lucide-react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 
 interface Bar {
@@ -117,9 +117,6 @@ const Checkout = () => {
     setProcessando(true);
     
     try {
-      // Em um ambiente real, aqui você chamaria a API do Stripe
-      // Para simplificar, vamos simular o processo de pagamento
-      
       // Salvar o pedido no banco de dados
       const { data: pedido, error: pedidoError } = await supabaseExtended
         .from("pedidos")
@@ -127,7 +124,7 @@ const Checkout = () => {
           user_id: user.id,
           bar_id: barId,
           valor_total: getCarrinhoValorTotal(),
-          status: 'pago'
+          status: 'pendente'
         })
         .select()
         .single();
@@ -150,15 +147,35 @@ const Checkout = () => {
         
       if (itensError) throw itensError;
       
-      // Limpar o carrinho após a compra
-      setCart((prevCart) => {
-        const { [barId as string]: _, ...restCart } = prevCart;
-        return restCart;
-      });
-      
-      // Redirecionar para a página de sucesso
-      navigate(`/pedido-confirmado/${pedido.id}`);
-      
+      // Redirecionar para o pagamento Stripe
+      const { data: stripeData, error: stripeError } = await supabase.functions.invoke(
+        "create-stripe-payment",
+        {
+          body: {
+            pedidoId: pedido.id,
+            barId: barId,
+            valorTotal: getCarrinhoValorTotal(),
+            items: carrinhoItens
+          }
+        }
+      );
+
+      if (stripeError) {
+        throw stripeError;
+      }
+
+      if (stripeData.url) {
+        // Limpar o carrinho após a criação do pedido
+        setCart((prevCart) => {
+          const { [barId as string]: _, ...restCart } = prevCart;
+          return restCart;
+        });
+        
+        // Redirecionar para a página de pagamento do Stripe
+        window.location.href = stripeData.url;
+      } else {
+        throw new Error("Não foi possível criar a sessão de pagamento");
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao processar o pedido",
@@ -166,7 +183,6 @@ const Checkout = () => {
         variant: "destructive"
       });
       console.error("Error processing order:", error);
-    } finally {
       setProcessando(false);
     }
   };
@@ -259,7 +275,11 @@ const Checkout = () => {
               onClick={processarPedido}
               disabled={processando}
             >
-              {processando ? "Processando..." : "Finalizar e pagar"}
+              {processando ? "Processando..." : (
+                <>
+                  <CreditCard className="mr-2 h-4 w-4" /> Pagar com cartão
+                </>
+              )}
             </Button>
           </CardFooter>
         </Card>
