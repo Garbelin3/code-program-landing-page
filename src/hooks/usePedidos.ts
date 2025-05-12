@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
@@ -32,7 +33,7 @@ export const usePedidos = () => {
     const fetchPedidos = async () => {
       setLoading(true);
       try {
-        // Buscar pedidos
+        // Buscar pedidos que estão pagos (não buscar pedidos com pagamento pendente)
         const { data: pedidosData, error: pedidosError } = await supabaseExtended
           .from("pedidos")
           .select(`
@@ -40,9 +41,11 @@ export const usePedidos = () => {
             created_at, 
             valor_total, 
             bar_id,
+            status,
             bars:bar_id (id, name, address)
           `)
           .eq("user_id", user.id)
+          .eq("status", "pago") // Apenas pedidos pagos
           .order("created_at", { ascending: false });
         
         if (pedidosError) throw pedidosError;

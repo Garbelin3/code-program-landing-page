@@ -1,5 +1,48 @@
 
 project_id = "meitoqhuhwqhzjywbxyf"
 
-[functions.create-admin]
-verify_jwt = false
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://localhost"
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+port = 54325
+
+[auth]
+enabled = true
+port = 54326
+
+[realtime]
+enabled = true
+port = 54327
+
+[migrations]
+enabled = true
+
+[analytics]
+enabled = true
+port = 54328
+
+[vector]
+enabled = true
+port = 54329
+
+[functions.create-stripe-payment]
+
+[functions.verify-stripe-payment]

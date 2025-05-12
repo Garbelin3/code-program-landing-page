@@ -5,13 +5,14 @@ import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, ShoppingBag } from "lucide-react";
+import { CheckCircle, ShoppingBag, AlertTriangle } from "lucide-react";
 
 interface PedidoConfirmado {
   id: string;
   valor_total: number;
   created_at: string;
   status: string;
+  stripe_session_id: string | null;
   bars: {
     name: string;
     address: string;
@@ -22,6 +23,25 @@ const PedidoConfirmado = () => {
   const { pedidoId } = useParams<{ pedidoId: string }>();
   const [loading, setLoading] = useState(true);
   const [pedido, setPedido] = useState<PedidoConfirmado | null>(null);
+  const [paymentVerified, setPaymentVerified] = useState(false);
+  
+  // Function to check payment status with Stripe
+  const verifyPayment = async (sessionId: string) => {
+    if (!sessionId) return false;
+    
+    try {
+      const { data, error } = await supabaseExtended.functions.invoke("verify-stripe-payment", {
+        body: { sessionId }
+      });
+      
+      if (error) throw error;
+      
+      return data?.paymentStatus === 'paid';
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      return false;
+    }
+  };
   
   useEffect(() => {
     const fetchPedido = async () => {
@@ -36,6 +56,7 @@ const PedidoConfirmado = () => {
             valor_total,
             created_at,
             status,
+            stripe_session_id,
             bars:bar_id (name, address)
           `)
           .eq("id", pedidoId)
@@ -44,30 +65,43 @@ const PedidoConfirmado = () => {
         if (pedidoError) throw pedidoError;
         
         if (pedidoData) {
-          // Update the pedido status to 'pago' if it was 'pendente'
-          if (pedidoData.status === 'pendente') {
-            const { error: updateError } = await supabaseExtended
-              .from("pedidos")
-              .update({ status: 'pago' })
-              .eq("id", pedidoId);
-            
-            if (updateError) {
-              console.error("Erro ao atualizar status do pedido:", updateError);
-            } else {
-              pedidoData.status = 'pago';
-            }
-          }
-          
-          setPedido({
+          // Cast the data to our interface
+          const formattedPedido: PedidoConfirmado = {
             id: pedidoData.id,
             valor_total: pedidoData.valor_total,
             created_at: pedidoData.created_at,
             status: pedidoData.status,
+            stripe_session_id: pedidoData.stripe_session_id,
             bars: {
               name: pedidoData.bars?.name || "",
               address: pedidoData.bars?.address || ""
             }
-          });
+          };
+          
+          setPedido(formattedPedido);
+          
+          // If the payment is pending and we have a session ID, verify it
+          if (pedidoData.status === 'pagamento_pendente' && pedidoData.stripe_session_id) {
+            const isPaid = await verifyPayment(pedidoData.stripe_session_id);
+            
+            if (isPaid) {
+              // Update the pedido status to 'pago'
+              const { error: updateError } = await supabaseExtended
+                .from("pedidos")
+                .update({ status: 'pago' })
+                .eq("id", pedidoId);
+              
+              if (updateError) {
+                console.error("Erro ao atualizar status do pedido:", updateError);
+              } else {
+                formattedPedido.status = 'pago';
+                setPedido({...formattedPedido});
+                setPaymentVerified(true);
+              }
+            }
+          } else if (pedidoData.status === 'pago') {
+            setPaymentVerified(true);
+          }
         }
       } catch (error: any) {
         toast({
@@ -124,11 +158,17 @@ const PedidoConfirmado = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto py-8 px-4 max-w-md">
         <Card className="mb-8">
-          <CardHeader className="text-center bg-green-50">
+          <CardHeader className={`text-center ${pedido.status === 'pago' ? 'bg-green-50' : 'bg-yellow-50'}`}>
             <div className="flex justify-center mb-4">
-              <CheckCircle className="h-20 w-20 text-green-500" />
+              {pedido.status === 'pago' ? (
+                <CheckCircle className="h-20 w-20 text-green-500" />
+              ) : (
+                <AlertTriangle className="h-20 w-20 text-yellow-500" />
+              )}
             </div>
-            <CardTitle className="text-2xl text-green-700">Pedido confirmado!</CardTitle>
+            <CardTitle className={`text-2xl ${pedido.status === 'pago' ? 'text-green-700' : 'text-yellow-700'}`}>
+              {pedido.status === 'pago' ? 'Pedido confirmado!' : 'Processando pagamento...'}
+            </CardTitle>
           </CardHeader>
           
           <CardContent className="pt-6">
@@ -146,9 +186,14 @@ const PedidoConfirmado = () => {
               
               <div>
                 <p className="text-gray-500 text-sm">Status do pagamento</p>
-                <p className="font-bold text-green-600">
+                <p className={`font-bold ${pedido.status === 'pago' ? 'text-green-600' : 'text-yellow-600'}`}>
                   {pedido.status === 'pago' ? 'Pago' : 'Pendente'}
                 </p>
+                {pedido.status !== 'pago' && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    O pagamento está sendo processado. Você receberá uma confirmação em breve.
+                  </p>
+                )}
               </div>
               
               <div>
