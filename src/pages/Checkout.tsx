@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -117,14 +116,14 @@ const Checkout = () => {
     setProcessando(true);
     
     try {
-      // Salvar o pedido no banco de dados com status pagamento_pendente
+      // Salvar o pedido no banco de dados
       const { data: pedido, error: pedidoError } = await supabaseExtended
         .from("pedidos")
         .insert({
           user_id: user.id,
           bar_id: barId,
           valor_total: getCarrinhoValorTotal(),
-          status: 'pagamento_pendente'
+          status: 'pendente'
         })
         .select()
         .single();
@@ -289,4 +288,3 @@ const Checkout = () => {
 };
 
 export default Checkout;
-
