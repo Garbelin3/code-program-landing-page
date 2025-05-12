@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { User } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogOut } from "lucide-react";
 import { BarList } from "@/components/BarList";
@@ -125,7 +125,12 @@ const Dashboard = ({
                 {profileData.role === 'dono' ? 'Dono' : profileData.role === 'funcionario' ? 'Funcionário' : profileData.role === 'caixa' ? 'Caixa' : 'Admin'}
               </span>}
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {profileData && profileData.role === 'user' && (
+              <Link to="/meus-pedidos">
+                <Button className="w-full sm:w-auto">Meus Pedidos</Button>
+              </Link>
+            )}
             <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
               <LogOut className="h-4 w-4" /> Sair
             </Button>
@@ -144,22 +149,22 @@ const AdminDashboard = () => {
   return <>
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-2xl">Painel de Administração</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl sm:text-3xl">Painel de Administração</CardTitle>
+          <CardDescription className="text-base sm:text-lg">
             Gerencie todos os aspectos da plataforma
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="border rounded-md p-4 bg-blue-50">
-              <h4 className="font-bold text-blue-700">Gerenciar Usuários</h4>
-              <p className="text-sm text-gray-600 mt-1">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="border rounded-md p-4 bg-blue-50 flex flex-col justify-center">
+              <h4 className="font-bold text-blue-700 text-base sm:text-lg">Gerenciar Usuários</h4>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">
                 Você tem acesso completo a todos os usuários
               </p>
             </div>
-            <div className="border rounded-md p-4 bg-green-50">
-              <h4 className="font-bold text-green-700">Gerenciar Bares</h4>
-              <p className="text-sm text-gray-600 mt-1">
+            <div className="border rounded-md p-4 bg-green-50 flex flex-col justify-center">
+              <h4 className="font-bold text-green-700 text-base sm:text-lg">Gerenciar Bares</h4>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">
                 Você tem acesso para gerenciar todos os bares
               </p>
             </div>
@@ -180,23 +185,23 @@ const OwnerDashboard = ({
   return <>
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-2xl">Painel do Dono</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl sm:text-3xl">Painel do Dono</CardTitle>
+          <CardDescription className="text-base sm:text-lg">
             Gerencie seu estabelecimento: {barData?.name || "Bar não encontrado"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="p-4 bg-white rounded-lg shadow">
-              <h3 className="font-semibold text-lg">Informações do Bar</h3>
-              {barData ? <div className="mt-2">
+              <h3 className="font-semibold text-lg sm:text-xl">Informações do Bar</h3>
+              {barData ? <div className="mt-2 space-y-1">
                   <p><span className="font-medium">Nome:</span> {barData.name}</p>
                   <p><span className="font-medium">Endereço:</span> {barData.address || "Não informado"}</p>
                 </div> : <p className="text-red-500">Dados do bar não encontrados</p>}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="border rounded-md p-4 bg-indigo-50 col-span-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="border rounded-md p-4 bg-indigo-50 col-span-1 md:col-span-3">
                 {barData && (
                   <GerenciarCardapio 
                     barId={barData.id} 
@@ -204,11 +209,11 @@ const OwnerDashboard = ({
                   />
                 )}
               </div>
-              <div className="border rounded-md p-4 bg-purple-50">
-                <h4 className="font-bold text-purple-700">Gerenciar Funcionários</h4>
+              <div className="border rounded-md p-4 bg-purple-50 flex items-center justify-center">
+                <h4 className="font-bold text-purple-700 text-center text-base sm:text-lg">Gerenciar Funcionários</h4>
               </div>
-              <div className="border rounded-md p-4 bg-amber-50">
-                <h4 className="font-bold text-amber-700">Relatórios Financeiros</h4>
+              <div className="border rounded-md p-4 bg-amber-50 flex items-center justify-center">
+                <h4 className="font-bold text-amber-700 text-center text-base sm:text-lg">Relatórios Financeiros</h4>
               </div>
             </div>
           </div>
@@ -228,23 +233,23 @@ const EmployeeDashboard = ({
   return <>
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-2xl">Painel do Funcionário</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl sm:text-3xl">Painel do Funcionário</CardTitle>
+          <CardDescription className="text-base sm:text-lg">
             Atendimento para: {barData?.name || "Bar não encontrado"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border rounded-md p-4 bg-cyan-50">
-                <h4 className="font-bold text-cyan-700">Gerenciar Pedidos</h4>
-                <p className="text-sm text-gray-600 mt-1">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="border rounded-md p-4 bg-cyan-50 flex flex-col justify-center">
+                <h4 className="font-bold text-cyan-700 text-base sm:text-lg">Gerenciar Pedidos</h4>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">
                   Visualize e gerencie pedidos dos clientes
                 </p>
               </div>
-              <div className="border rounded-md p-4 bg-emerald-50">
-                <h4 className="font-bold text-emerald-700">Ver Cardápio</h4>
-                <p className="text-sm text-gray-600 mt-1">
+              <div className="border rounded-md p-4 bg-emerald-50 flex flex-col justify-center">
+                <h4 className="font-bold text-emerald-700 text-base sm:text-lg">Ver Cardápio</h4>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">
                   Consulte os itens disponíveis no cardápio
                 </p>
               </div>
@@ -266,23 +271,23 @@ const CashierDashboard = ({
   return <>
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-2xl">Painel do Caixa</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl sm:text-3xl">Painel do Caixa</CardTitle>
+          <CardDescription className="text-base sm:text-lg">
             Gerenciamento financeiro para: {barData?.name || "Bar não encontrado"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border rounded-md p-4 bg-rose-50">
-                <h4 className="font-bold text-rose-700">Pagamentos</h4>
-                <p className="text-sm text-gray-600 mt-1">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="border rounded-md p-4 bg-rose-50 flex flex-col justify-center">
+                <h4 className="font-bold text-rose-700 text-base sm:text-lg">Pagamentos</h4>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">
                   Gerencie e processe pagamentos
                 </p>
               </div>
-              <div className="border rounded-md p-4 bg-amber-50">
-                <h4 className="font-bold text-amber-700">Fechamento de Caixa</h4>
-                <p className="text-sm text-gray-600 mt-1">
+              <div className="border rounded-md p-4 bg-amber-50 flex flex-col justify-center">
+                <h4 className="font-bold text-amber-700 text-base sm:text-lg">Fechamento de Caixa</h4>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">
                   Relatórios e fechamento diário
                 </p>
               </div>
@@ -300,12 +305,10 @@ const UserDashboard = ({
   profileData: ProfileData;
 }) => {
   return <>
-      
-
-      <Card>
+      <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Bares Disponíveis</CardTitle>
-          <CardDescription>Escolha um bar para fazer seu pedido</CardDescription>
+          <CardTitle className="text-2xl sm:text-3xl">Bares Disponíveis</CardTitle>
+          <CardDescription className="text-base sm:text-lg">Escolha um bar para fazer seu pedido</CardDescription>
         </CardHeader>
         <CardContent>
           <BarList />

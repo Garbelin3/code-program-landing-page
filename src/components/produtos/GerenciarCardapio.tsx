@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -16,22 +15,24 @@ export function GerenciarCardapio({ barId, barName }: GerenciarCardapioProps) {
   
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-2">
         <div>
-          <CardTitle className="text-xl">Gerenciar Cardápio</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">Gerenciar Cardápio</CardTitle>
+          <CardDescription className="text-sm sm:text-base">
             Adicione e gerencie os produtos do cardápio de {barName}
           </CardDescription>
         </div>
         <Button 
           onClick={() => setFormOpen(true)}
-          className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700"
+          className="w-full sm:w-auto flex items-center gap-1 bg-purple-600 hover:bg-purple-700 mt-2 sm:mt-0"
         >
           <Plus className="h-4 w-4" /> Adicionar Produto
         </Button>
       </CardHeader>
       <CardContent>
-        <ListaProdutos barId={barId} />
+        <div className="overflow-x-auto">
+          <ListaProdutos barId={barId} />
+        </div>
       </CardContent>
       
       <ProdutoForm

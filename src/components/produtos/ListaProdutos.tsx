@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -132,50 +131,52 @@ export function ListaProdutos({ barId }: ListaProdutosProps) {
   return (
     <>
       {produtos.length > 0 ? (
-        <Table className="border rounded-md">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Preço</TableHead>
-              <TableHead className="w-[120px] text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {produtos.map((produto) => (
-              <TableRow key={produto.id}>
-                <TableCell>
-                  <div>
-                    <p className="font-medium">{produto.nome}</p>
-                    {produto.descricao && (
-                      <p className="text-xs text-gray-500 mt-1 truncate max-w-[250px]">
-                        {produto.descricao}
-                      </p>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>{produto.categoria}</TableCell>
-                <TableCell>{formatarPreco(produto.preco)}</TableCell>
-                <TableCell className="text-right space-x-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleEditar(produto)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => handleExcluir(produto)}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table className="border rounded-md min-w-[400px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Preço</TableHead>
+                <TableHead className="w-[120px] text-right">Ações</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {produtos.map((produto) => (
+                <TableRow key={produto.id}>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium text-sm sm:text-base">{produto.nome}</p>
+                      {produto.descricao && (
+                        <p className="text-xs text-gray-500 mt-1 truncate max-w-[180px] sm:max-w-[250px]">
+                          {produto.descricao}
+                        </p>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs sm:text-base">{produto.categoria}</TableCell>
+                  <TableCell className="text-xs sm:text-base">{formatarPreco(produto.preco)}</TableCell>
+                  <TableCell className="text-right space-x-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleEditar(produto)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleExcluir(produto)}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       ) : (
         <div className="text-center py-8 border rounded-md bg-gray-50">
           <p className="text-gray-500">Nenhum produto cadastrado</p>
