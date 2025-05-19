@@ -47,6 +47,8 @@ export const usePedidos = () => {
         
         if (pedidosError) throw pedidosError;
         
+        console.log("Dados dos pedidos:", pedidosData);
+        
         // Buscar itens de cada pedido
         const pedidosComItens = await Promise.all(
           (pedidosData || []).map(async (pedido) => {
@@ -193,6 +195,8 @@ export const usePedidos = () => {
         }
       }
       
+      console.log("Salvando código de retirada:", codigo, "com itens:", itensSelecionados);
+      
       // Salvar o código de retirada no banco de dados
       const { error: codigoError } = await supabaseExtended
         .from("codigos_retirada")
@@ -204,6 +208,8 @@ export const usePedidos = () => {
         });
       
       if (codigoError) throw codigoError;
+      
+      console.log("Código de retirada salvo com sucesso");
       
       // Atualizar os pedidos no estado
       setPedidos(prevPedidos => {

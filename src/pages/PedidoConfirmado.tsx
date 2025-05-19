@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
@@ -16,7 +17,7 @@ interface PedidoConfirmado {
   valor_total: number;
   created_at: string;
   status: string;
-  bars: BarInfo; // Fixed: bars is an object, not an array
+  bars: BarInfo; // Tipo corrigido: objeto, não array
 }
 
 const PedidoConfirmado = () => {
@@ -58,6 +59,8 @@ const PedidoConfirmado = () => {
               pedidoData.status = 'pago';
             }
           }
+          
+          console.log("Dados do pedido:", pedidoData);
           
           // Fix type issue - bars is an object, not an array
           setPedido({

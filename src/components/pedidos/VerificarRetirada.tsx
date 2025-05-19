@@ -72,6 +72,7 @@ export const VerificarRetirada = () => {
     setSuccess(false);
     
     try {
+      // Buscar o código na tabela codigos_retirada
       const { data, error } = await supabaseExtended
         .from("codigos_retirada")
         .select("*")
@@ -80,11 +81,15 @@ export const VerificarRetirada = () => {
       
       if (error) throw error;
       
+      console.log("Código encontrado:", data);
+      
       if (data.usado) {
         setError("Este código já foi utilizado para retirada.");
+        setLoading(false);
         return;
       }
       
+      // Guardar os dados do código de retirada
       setCodigoRetirada(data);
       
       // Buscar informações do pedido
@@ -103,7 +108,9 @@ export const VerificarRetirada = () => {
       
       if (pedidoError) throw pedidoError;
       
-      // Fix type issue - bars is properly typed as an object
+      console.log("Dados do pedido:", pedidoData);
+      
+      // Configurar o objeto de pedido com a estrutura correta
       setPedido({
         id: pedidoData.id,
         created_at: pedidoData.created_at,
@@ -116,17 +123,23 @@ export const VerificarRetirada = () => {
         }
       });
       
-      console.log("Data itens:", data.itens);
+      // Processar os itens do código de retirada
+      console.log("Dados de itens brutos:", data.itens);
       
       // Converter o objeto de itens para um array mais fácil de usar
-      const items: ItemRetirada[] = Object.entries(data.itens || {}).map(([nome, quantidade]) => ({
-        nome_produto: nome,
-        quantidade: quantidade as number
-      })).filter(item => item.quantidade > 0);
-      
-      console.log("Items extraídos:", items);
-      
-      setItemsRetirados(items);
+      if (data.itens) {
+        const items: ItemRetirada[] = Object.entries(data.itens).map(([nome, quantidade]) => ({
+          nome_produto: nome,
+          quantidade: quantidade as number
+        })).filter(item => item.quantidade > 0);
+        
+        console.log("Items processados para exibição:", items);
+        setItemsRetirados(items);
+      } else {
+        console.error("Nenhum item encontrado no código de retirada");
+        // Atribuir array vazio para evitar erros de renderização
+        setItemsRetirados([]);
+      }
       
     } catch (error: any) {
       console.error("Error fetching pickup code:", error);
@@ -141,13 +154,18 @@ export const VerificarRetirada = () => {
     
     setLoading(true);
     try {
+      // Atualizar a coluna "usado" para true
       const { error } = await supabaseExtended
         .from("codigos_retirada")
         .update({ usado: true })
         .eq("id", codigoRetirada.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao atualizar status do código:", error);
+        throw error;
+      }
       
+      console.log("Entrega confirmada com sucesso, código marcado como usado");
       setSuccess(true);
       setCodigoInput("");
       
