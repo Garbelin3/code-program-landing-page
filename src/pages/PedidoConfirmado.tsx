@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
@@ -58,6 +57,7 @@ const PedidoConfirmado = () => {
             }
           }
           
+          // Fix type issue - bars is an object, not an array
           setPedido({
             id: pedidoData.id,
             valor_total: pedidoData.valor_total,

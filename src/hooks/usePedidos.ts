@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
@@ -57,7 +58,7 @@ export const usePedidos = () => {
             
             if (itensError) throw itensError;
             
-            // Explicitly map the data to match our Pedido interface
+            // Fix type issue - bars is an object, not an array
             return {
               id: pedido.id,
               created_at: pedido.created_at,
