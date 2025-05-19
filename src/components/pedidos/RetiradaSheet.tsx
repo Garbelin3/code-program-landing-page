@@ -1,10 +1,11 @@
 
 import { useState } from "react";
-import { ShoppingBag, QrCode, Clipboard } from "lucide-react";
+import { ShoppingBag, Clipboard } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Pedido } from "@/types/pedidos";
 import { ItemAgregado } from "@/types/pedidos";
+import { QRCodeSVG } from "qrcode.react";
 import { 
   Sheet, 
   SheetContent, 
@@ -13,13 +14,6 @@ import {
   SheetDescription, 
   SheetFooter 
 } from "@/components/ui/sheet";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { RetirarQuantidadeSelector } from "./RetirarQuantidadeSelector";
 
 interface RetiradaSheetProps {
@@ -64,6 +58,13 @@ export const RetiradaSheet = ({
     });
   };
 
+  // Generate data for QR code in JSON format
+  const qrCodeData = JSON.stringify({
+    codigo: codigoRetirada,
+    pedido_id: selectedPedido?.id || "",
+    itens: itensSelecionados
+  });
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent className="sm:max-w-md">
@@ -105,7 +106,14 @@ export const RetiradaSheet = ({
         ) : (
           <div className="flex flex-col items-center justify-center py-8">
             <div className="bg-gray-100 p-4 rounded-lg mb-4">
-              <QrCode className="h-32 w-32 text-purple-700 mx-auto" />
+              <QRCodeSVG 
+                value={qrCodeData}
+                size={200}
+                bgColor={"#ffffff"}
+                fgColor={"#000000"}
+                level={"L"}
+                className="mx-auto"
+              />
             </div>
             
             <div className="text-center mb-6">

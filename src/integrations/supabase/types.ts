@@ -39,6 +39,41 @@ export type Database = {
         }
         Relationships: []
       }
+      codigos_retirada: {
+        Row: {
+          codigo: string
+          created_at: string
+          id: string
+          itens: Json
+          pedido_id: string
+          usado: boolean | null
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          id?: string
+          itens: Json
+          pedido_id: string
+          usado?: boolean | null
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          id?: string
+          itens?: Json
+          pedido_id?: string
+          usado?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "codigos_retirada_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedido_itens: {
         Row: {
           created_at: string

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LogOut } from "lucide-react";
 import { BarList } from "@/components/BarList";
 import { GerenciarCardapio } from "@/components/produtos/GerenciarCardapio";
+import { VerificarRetirada } from "@/components/pedidos/VerificarRetirada";
 
 interface BarData {
   id: string;

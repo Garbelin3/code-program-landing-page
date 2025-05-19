@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
@@ -152,12 +151,16 @@ export const usePedidos = () => {
     // Gerar código numérico de 6 dígitos
     const codigo = Math.floor(100000 + Math.random() * 900000).toString();
     setCodigoRetirada(codigo);
+    return codigo;
   };
   
   const confirmarRetirada = async () => {
     if (!selectedPedido || Object.keys(itensSelecionados).length === 0) return;
     
     try {
+      // Gerar código de retirada
+      const codigo = gerarCodigoRetirada();
+      
       // Para cada produto selecionado, precisamos distribuir a quantidade entre os itens disponíveis
       for (const [nomeProduto, quantidadeTotal] of Object.entries(itensSelecionados)) {
         let quantidadeRestante = quantidadeTotal;
@@ -190,6 +193,18 @@ export const usePedidos = () => {
         }
       }
       
+      // Salvar o código de retirada no banco de dados
+      const { error: codigoError } = await supabaseExtended
+        .from("codigos_retirada")
+        .insert({
+          codigo: codigo,
+          pedido_id: selectedPedido.id,
+          itens: itensSelecionados,
+          usado: false
+        });
+      
+      if (codigoError) throw codigoError;
+      
       // Atualizar os pedidos no estado
       setPedidos(prevPedidos => {
         return prevPedidos.map(pedido => {
@@ -213,8 +228,6 @@ export const usePedidos = () => {
         });
       });
       
-      // Gerar código de retirada
-      gerarCodigoRetirada();
       setQrVisible(true);
       
     } catch (error: any) {
