@@ -240,8 +240,17 @@ const EmployeeDashboard = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="space-y-6">
+            <div className="bg-amber-50 border border-amber-100 p-4 rounded-lg">
+              <h2 className="text-lg font-semibold text-amber-800 mb-2">Gerenciamento de Pedidos</h2>
+              <p className="text-sm text-amber-700 mb-4">
+                Utilize o scanner para verificar e processar as retiradas de pedidos.
+              </p>
+              
+              <VerificarRetirada />
+            </div>
+          
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mt-6">
               <div className="border rounded-md p-4 bg-cyan-50 flex flex-col justify-center">
                 <h4 className="font-bold text-cyan-700 text-base sm:text-lg">Gerenciar Pedidos</h4>
                 <p className="text-sm sm:text-base text-gray-600 mt-1">
