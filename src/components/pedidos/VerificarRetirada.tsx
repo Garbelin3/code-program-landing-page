@@ -36,7 +36,7 @@ interface PedidoBasic {
   valor_total: number;
   status: string;
   user_id: string;
-  bars: BarInfo; // Fixed: bars is an object, not an array
+  bars: BarInfo;
 }
 
 export const VerificarRetirada = () => {
@@ -49,7 +49,7 @@ export const VerificarRetirada = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const scannerDivRef = useRef<HTMLDivElement | null>(null);
+  const scannerDivId = useRef<string>(`qr-reader-${Math.random().toString(36).substring(2, 9)}`);
   
   const handleCodigoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCodigoInput(e.target.value);
@@ -103,7 +103,7 @@ export const VerificarRetirada = () => {
       
       if (pedidoError) throw pedidoError;
       
-      // Now bars is properly typed as an object
+      // Fix type issue - bars is properly typed as an object
       setPedido({
         id: pedidoData.id,
         created_at: pedidoData.created_at,
@@ -116,11 +116,15 @@ export const VerificarRetirada = () => {
         }
       });
       
+      console.log("Data itens:", data.itens);
+      
       // Converter o objeto de itens para um array mais fácil de usar
-      const items: ItemRetirada[] = Object.entries(data.itens).map(([nome, quantidade]) => ({
+      const items: ItemRetirada[] = Object.entries(data.itens || {}).map(([nome, quantidade]) => ({
         nome_produto: nome,
         quantidade: quantidade as number
       })).filter(item => item.quantidade > 0);
+      
+      console.log("Items extraídos:", items);
       
       setItemsRetirados(items);
       
@@ -182,37 +186,33 @@ export const VerificarRetirada = () => {
       return;
     }
     
-    if (!scannerDivRef.current) {
-      // Create a unique ID for the scanner div if it doesn't exist
-      const uniqueId = "qr-reader-" + Math.random().toString(36).substring(2, 9);
-      
-      // Create a new div element with the unique ID
-      const scannerDiv = document.createElement("div");
-      scannerDiv.id = uniqueId;
-      scannerDivRef.current = scannerDiv;
-      
-      // Find the parent element where we want to append the scanner div
-      const parentElement = document.getElementById("scanner-container");
-      if (parentElement) {
-        // Clear existing content and append the scanner div
-        parentElement.innerHTML = "";
-        parentElement.appendChild(scannerDiv);
-      } else {
-        console.error("Scanner container not found");
-        toast({
-          title: "Erro",
-          description: "Container para o scanner não encontrado",
-          variant: "destructive"
-        });
-        return;
-      }
+    // Create scanner container if it doesn't exist
+    const scannerContainer = document.getElementById("scanner-container");
+    if (!scannerContainer) {
+      console.error("Scanner container not found");
+      toast({
+        title: "Erro",
+        description: "Container para o scanner não encontrado",
+        variant: "destructive"
+      });
+      return;
     }
+    
+    // Clear existing content
+    scannerContainer.innerHTML = "";
+    
+    // Create a new div for the scanner
+    const scannerDiv = document.createElement("div");
+    scannerDiv.id = scannerDivId.current;
+    scannerContainer.appendChild(scannerDiv);
     
     try {
       // Initialize the scanner with the ID of the div
-      const scanner = new Html5Qrcode(scannerDivRef.current.id);
+      const scanner = new Html5Qrcode(scannerDivId.current);
       scannerRef.current = scanner;
       setScanning(true);
+      
+      console.log("Starting QR scanner");
       
       await scanner.start(
         { facingMode: "environment" },
@@ -225,6 +225,7 @@ export const VerificarRetirada = () => {
           // Verificar se o texto do QR é um JSON válido
           try {
             const qrData = JSON.parse(decodedText);
+            console.log("Parsed QR data:", qrData);
             if (qrData.codigo && qrData.codigo.length === 6) {
               stopScanner();
               setCodigoInput(qrData.codigo);
@@ -425,7 +426,7 @@ export const VerificarRetirada = () => {
             <div>
               <h3 className="font-medium text-lg mb-2">Itens para retirada</h3>
               <div className="border rounded-md divide-y">
-                {itemsRetirados.length > 0 ? (
+                {itemsRetirados && itemsRetirados.length > 0 ? (
                   itemsRetirados.map((item, i) => (
                     <div key={i} className="p-3 flex justify-between items-center">
                       <span className="font-medium">{item.nome_produto}</span>
