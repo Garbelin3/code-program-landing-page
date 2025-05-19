@@ -47,6 +47,8 @@ export const usePedidos = () => {
         
         if (pedidosError) throw pedidosError;
         
+        console.log("Pedidos data:", pedidosData);
+        
         // Buscar itens de cada pedido
         const pedidosComItens = await Promise.all(
           (pedidosData || []).map(async (pedido) => {

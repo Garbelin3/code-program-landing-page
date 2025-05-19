@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
@@ -16,7 +17,7 @@ interface PedidoConfirmado {
   valor_total: number;
   created_at: string;
   status: string;
-  bars: BarInfo; // Fixed: bars is an object, not an array
+  bars: BarInfo;
 }
 
 const PedidoConfirmado = () => {
@@ -43,6 +44,8 @@ const PedidoConfirmado = () => {
           .single();
         
         if (pedidoError) throw pedidoError;
+        
+        console.log("Pedido confirmado data:", pedidoData);
         
         if (pedidoData) {
           // Update the pedido status to 'pago' if it was 'pendente'

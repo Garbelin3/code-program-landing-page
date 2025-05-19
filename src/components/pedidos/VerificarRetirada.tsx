@@ -72,6 +72,8 @@ export const VerificarRetirada = () => {
     setSuccess(false);
     
     try {
+      // Buscar o código de retirada
+      console.log("Buscando código:", codigoInput);
       const { data, error } = await supabaseExtended
         .from("codigos_retirada")
         .select("*")
@@ -79,6 +81,8 @@ export const VerificarRetirada = () => {
         .single();
       
       if (error) throw error;
+      
+      console.log("Código de retirada encontrado:", data);
       
       if (data.usado) {
         setError("Este código já foi utilizado para retirada.");
@@ -103,6 +107,8 @@ export const VerificarRetirada = () => {
       
       if (pedidoError) throw pedidoError;
       
+      console.log("Pedido encontrado:", pedidoData);
+      
       // Fix type issue - bars is properly typed as an object
       setPedido({
         id: pedidoData.id,
@@ -116,15 +122,39 @@ export const VerificarRetirada = () => {
         }
       });
       
-      console.log("Data itens:", data.itens);
+      // Debug o formato dos itens recebidos
+      console.log("Data itens (raw):", data.itens);
+      console.log("Tipo dos itens:", typeof data.itens);
       
-      // Converter o objeto de itens para um array mais fácil de usar
-      const items: ItemRetirada[] = Object.entries(data.itens || {}).map(([nome, quantidade]) => ({
-        nome_produto: nome,
-        quantidade: quantidade as number
-      })).filter(item => item.quantidade > 0);
+      // Garantir que temos um objeto de itens válido
+      let itemsObject: Record<string, number> = {};
       
-      console.log("Items extraídos:", items);
+      // Verificar se itens é uma string (pode acontecer se estiver armazenado como JSON string)
+      if (typeof data.itens === 'string') {
+        try {
+          itemsObject = JSON.parse(data.itens);
+          console.log("Itens convertidos de string JSON:", itemsObject);
+        } catch (e) {
+          console.error("Erro ao parsear itens como JSON:", e);
+          itemsObject = {};
+        }
+      } else if (data.itens && typeof data.itens === 'object') {
+        // Se já for um objeto, usar diretamente
+        itemsObject = data.itens;
+      }
+      
+      console.log("ItemsObject processado:", itemsObject);
+      
+      // Converter o objeto de itens para um array
+      const items: ItemRetirada[] = Object.entries(itemsObject).map(([nome, quantidade]) => {
+        console.log(`Processando item: ${nome} = ${quantidade}`);
+        return {
+          nome_produto: nome,
+          quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
+        };
+      }).filter(item => item.quantidade > 0);
+      
+      console.log("Items processados para exibição:", items);
       
       setItemsRetirados(items);
       
