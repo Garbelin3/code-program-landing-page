@@ -25,16 +25,18 @@ interface CodigoRetirada {
   created_at: string;
 }
 
+interface BarInfo {
+  name: string;
+  address: string;
+}
+
 interface PedidoBasic {
   id: string;
   created_at: string;
   valor_total: number;
   status: string;
   user_id: string;
-  bars: {
-    name: string;
-    address: string;
-  };
+  bars: BarInfo; // Fixed: bars is an object, not an array
 }
 
 export const VerificarRetirada = () => {
@@ -101,7 +103,7 @@ export const VerificarRetirada = () => {
       
       if (pedidoError) throw pedidoError;
       
-      // Fix type issue - bars is an object, not an array
+      // Now bars is properly typed as an object
       setPedido({
         id: pedidoData.id,
         created_at: pedidoData.created_at,
@@ -123,8 +125,8 @@ export const VerificarRetirada = () => {
       setItemsRetirados(items);
       
     } catch (error: any) {
-      setError("Código de retirada não encontrado ou inválido.");
       console.error("Error fetching pickup code:", error);
+      setError("Código de retirada não encontrado ou inválido.");
     } finally {
       setLoading(false);
     }
@@ -169,12 +171,45 @@ export const VerificarRetirada = () => {
     setError(null);
     setSuccess(false);
     setScanning(false);
+    
+    // Make sure to stop the scanner if it's running
+    stopScanner();
   };
   
   const startScanner = async () => {
-    if (scannerRef.current || !scannerDivRef.current) return;
+    if (scannerRef.current) {
+      // Scanner already running
+      return;
+    }
+    
+    if (!scannerDivRef.current) {
+      // Create a unique ID for the scanner div if it doesn't exist
+      const uniqueId = "qr-reader-" + Math.random().toString(36).substring(2, 9);
+      
+      // Create a new div element with the unique ID
+      const scannerDiv = document.createElement("div");
+      scannerDiv.id = uniqueId;
+      scannerDivRef.current = scannerDiv;
+      
+      // Find the parent element where we want to append the scanner div
+      const parentElement = document.getElementById("scanner-container");
+      if (parentElement) {
+        // Clear existing content and append the scanner div
+        parentElement.innerHTML = "";
+        parentElement.appendChild(scannerDiv);
+      } else {
+        console.error("Scanner container not found");
+        toast({
+          title: "Erro",
+          description: "Container para o scanner não encontrado",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
     
     try {
+      // Initialize the scanner with the ID of the div
       const scanner = new Html5Qrcode(scannerDivRef.current.id);
       scannerRef.current = scanner;
       setScanning(true);
@@ -186,6 +221,7 @@ export const VerificarRetirada = () => {
           qrbox: { width: 250, height: 250 }
         },
         (decodedText) => {
+          console.log("QR Code decoded:", decodedText);
           // Verificar se o texto do QR é um JSON válido
           try {
             const qrData = JSON.parse(decodedText);
@@ -204,6 +240,7 @@ export const VerificarRetirada = () => {
               });
             }
           } catch (error) {
+            console.error("Error parsing QR data:", error);
             toast({
               title: "QR Code inválido",
               description: "Não foi possível ler os dados do QR code",
@@ -212,9 +249,17 @@ export const VerificarRetirada = () => {
           }
         },
         (errorMessage) => {
-          console.error(errorMessage);
+          console.error("QR Scanner error:", errorMessage);
         }
-      );
+      ).catch(error => {
+        console.error("Failed to start scanner:", error);
+        toast({
+          title: "Erro ao iniciar scanner",
+          description: "Verifique se você concedeu permissão para usar a câmera",
+          variant: "destructive"
+        });
+        setScanning(false);
+      });
     } catch (err) {
       console.error("Erro ao iniciar scanner:", err);
       setScanning(false);
@@ -268,7 +313,7 @@ export const VerificarRetirada = () => {
   };
   
   return (
-    <Card className="w-full">
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="text-xl">Verificar Retirada</CardTitle>
         <CardDescription>
@@ -314,10 +359,9 @@ export const VerificarRetirada = () => {
                   ) : (
                     <div className="space-y-4">
                       <div 
-                        id="qr-reader" 
-                        className="w-full" 
-                        style={{ maxWidth: "500px", margin: "0 auto" }}
-                        ref={scannerDivRef}
+                        id="scanner-container" 
+                        className="w-full rounded-md overflow-hidden"
+                        style={{ maxWidth: "100%", margin: "0 auto", height: "300px" }}
                       ></div>
                       <Button 
                         variant="destructive"
@@ -359,7 +403,7 @@ export const VerificarRetirada = () => {
         ) : (
           <div className="space-y-6">
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-              <div className="flex justify-between items-start">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
                 <div>
                   <h3 className="font-semibold text-lg text-blue-900">Pedido #{pedido?.id.substring(0, 8)}</h3>
                   <p className="text-sm text-blue-700">
@@ -372,7 +416,7 @@ export const VerificarRetirada = () => {
                     {pedido?.bars.address}
                   </p>
                 </div>
-                <Badge className="bg-amber-500">
+                <Badge className="bg-amber-500 mt-2 sm:mt-0 self-start">
                   Código: {codigoRetirada.codigo}
                 </Badge>
               </div>
@@ -381,14 +425,20 @@ export const VerificarRetirada = () => {
             <div>
               <h3 className="font-medium text-lg mb-2">Itens para retirada</h3>
               <div className="border rounded-md divide-y">
-                {itemsRetirados.map((item, i) => (
-                  <div key={i} className="p-3 flex justify-between items-center">
-                    <span className="font-medium">{item.nome_produto}</span>
-                    <Badge variant="outline" className="ml-2">
-                      {item.quantidade}x
-                    </Badge>
+                {itemsRetirados.length > 0 ? (
+                  itemsRetirados.map((item, i) => (
+                    <div key={i} className="p-3 flex justify-between items-center">
+                      <span className="font-medium">{item.nome_produto}</span>
+                      <Badge variant="outline" className="ml-2">
+                        {item.quantidade}x
+                      </Badge>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    Nenhum item para retirada
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

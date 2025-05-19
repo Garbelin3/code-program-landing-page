@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
@@ -7,15 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ShoppingBag } from "lucide-react";
 
+interface BarInfo {
+  name: string;
+  address: string;
+}
+
 interface PedidoConfirmado {
   id: string;
   valor_total: number;
   created_at: string;
   status: string;
-  bars: {
-    name: string;
-    address: string;
-  };
+  bars: BarInfo; // Fixed: bars is an object, not an array
 }
 
 const PedidoConfirmado = () => {
@@ -136,25 +137,25 @@ const PedidoConfirmado = () => {
             <div className="space-y-4">
               <div>
                 <p className="text-gray-500 text-sm">Pedido realizado em</p>
-                <p className="font-medium">{formatarData(pedido.created_at)}</p>
+                <p className="font-medium">{pedido && formatarData(pedido.created_at)}</p>
               </div>
               
               <div>
                 <p className="text-gray-500 text-sm">Local</p>
-                <p className="font-medium">{pedido.bars.name}</p>
-                <p className="text-sm text-gray-600">{pedido.bars.address}</p>
+                <p className="font-medium">{pedido?.bars.name}</p>
+                <p className="text-sm text-gray-600">{pedido?.bars.address}</p>
               </div>
               
               <div>
                 <p className="text-gray-500 text-sm">Status do pagamento</p>
                 <p className="font-bold text-green-600">
-                  {pedido.status === 'pago' ? 'Pago' : 'Pendente'}
+                  {pedido?.status === 'pago' ? 'Pago' : 'Pendente'}
                 </p>
               </div>
               
               <div>
                 <p className="text-gray-500 text-sm">Valor total</p>
-                <p className="font-bold text-lg">{formatarPreco(pedido.valor_total)}</p>
+                <p className="font-bold text-lg">{pedido && formatarPreco(pedido.valor_total)}</p>
               </div>
               
               <div className="pt-4 flex flex-col gap-3">
