@@ -223,7 +223,6 @@ const OwnerDashboard = ({
     </>;
 };
 
-// Employee Dashboard Component
 const EmployeeDashboard = ({
   profileData,
   barData
@@ -247,7 +246,6 @@ const EmployeeDashboard = ({
               <p className="text-sm text-amber-700 mb-4">
                 Utilize o scanner para verificar e processar as retiradas de pedidos.
               </p>
-              
               <VerificarRetirada />
             </div>
           </div>
@@ -256,6 +254,7 @@ const EmployeeDashboard = ({
     </>
   );
 };
+
 
 
 // Cashier Dashboard Component
