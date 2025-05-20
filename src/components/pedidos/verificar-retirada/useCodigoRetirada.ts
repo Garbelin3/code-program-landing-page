@@ -98,8 +98,8 @@ export const useCodigoRetirada = () => {
         status: pedidoData.status,
         user_id: pedidoData.user_id,
         bars: {
-          name: pedidoData.bar ? pedidoData.bar.name || "" : "",
-          address: pedidoData.bar ? pedidoData.bar.address || "" : ""
+          name: pedidoData.bar?.name || "",
+          address: pedidoData.bar?.address || ""
         }
       });
       
@@ -181,7 +181,7 @@ export const useCodigoRetirada = () => {
     loading,
     codigoRetirada,
     pedido,
-    itensRetirados,
+    itemRetirados,
     error,
     success,
     handleCodigoChange,
