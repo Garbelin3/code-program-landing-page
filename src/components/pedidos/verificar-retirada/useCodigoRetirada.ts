@@ -9,7 +9,7 @@ export const useCodigoRetirada = () => {
   const [loading, setLoading] = useState(false);
   const [codigoRetirada, setCodigoRetirada] = useState<CodigoRetirada | null>(null);
   const [pedido, setPedido] = useState<PedidoBasic | null>(null);
-  const [itemsRetirados, setItemsRetirados] = useState<ItemRetirada[]>([]);
+  const [itensRetirados, setItensRetirados] = useState<ItemRetirada[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   
@@ -30,7 +30,7 @@ export const useCodigoRetirada = () => {
     setLoading(true);
     setError(null);
     setCodigoRetirada(null);
-    setItemsRetirados([]);
+    setItensRetirados([]);
     setSuccess(false);
     
     try {
@@ -113,12 +113,12 @@ export const useCodigoRetirada = () => {
           quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
         })).filter(item => item.quantidade > 0);
         
-        console.log("Items processados para exibição:", items);
-        setItemsRetirados(items);
+        console.log("Itens processados para exibição:", items);
+        setItensRetirados(items);
       } else {
         console.error("Nenhum item encontrado ou formato inválido no código de retirada");
         // Atribuir array vazio para evitar erros de renderização
-        setItemsRetirados([]);
+        setItensRetirados([]);
       }
       
     } catch (error: any) {
@@ -169,7 +169,7 @@ export const useCodigoRetirada = () => {
     setCodigoInput("");
     setCodigoRetirada(null);
     setPedido(null);
-    setItemsRetirados([]);
+    setItensRetirados([]);
     setError(null);
     setSuccess(false);
   };
