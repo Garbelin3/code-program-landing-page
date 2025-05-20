@@ -98,8 +98,8 @@ export const useCodigoRetirada = () => {
         status: pedidoData.status,
         user_id: pedidoData.user_id,
         bars: {
-          name: pedidoData.bar?.name || "",
-          address: pedidoData.bar?.address || ""
+          name: pedidoData.bar ? pedidoData.bar.name || "" : "",
+          address: pedidoData.bar ? pedidoData.bar.address || "" : ""
         }
       });
       
@@ -109,13 +109,13 @@ export const useCodigoRetirada = () => {
       // Converter o objeto de item para um array mais fácil de usar
       if (data.itens && typeof data.itens === 'object') {
         // Garantir que estamos trabalhando com um objeto para converter em array
-        const itens: ItemRetirada[] = Object.entries(data.itens).map(([nome, quantidade]) => ({
+        const item: ItemRetirada[] = Object.entries(data.itens).map(([nome, quantidade]) => ({
           nome_produto: nome,
           quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
         })).filter(item => item.quantidade > 0);
         
         console.log("Itens processados para exibição:", item);
-        setItensRetirados(itens);
+        setItensRetirados(item);
       } else {
         console.error("Nenhum item encontrado ou formato inválido no código de retirada");
         // Atribuir array vazio para evitar erros de renderização
