@@ -7,6 +7,7 @@ import { ArrowLeft, Check, Clock } from 'lucide-react';
 import QRCode from 'qrcode.react';
 import { Pedido } from '@/types/pedidos';
 import { useToast } from '@/hooks/use-toast';
+import { formatarPreco } from '@/components/pedidos/verificar-retirada/utils';
 
 const PedidoConfirmado = () => {
   const { pedidoId } = useParams();
@@ -23,14 +24,26 @@ const PedidoConfirmado = () => {
       try {
         setLoading(true);
         
+        // Buscar pedido com informações do bar usando o formato de item único
         const { data: pedidoData, error: pedidoError } = await supabase
           .from('pedidos')
-          .select('*, bar:bars(*)')
+          .select('*, bar:bar_id(*)')
           .eq('id', pedidoId)
-          .single();
+          .maybeSingle();
 
         if (pedidoError) throw pedidoError;
+        
+        if (!pedidoData) {
+          toast({
+            title: 'Erro',
+            description: 'Pedido não encontrado',
+            variant: 'destructive'
+          });
+          setLoading(false);
+          return;
+        }
 
+        // Buscar itens do pedido
         const { data: itensData, error: itensError } = await supabase
           .from('pedido_itens')
           .select('*')
@@ -38,12 +51,14 @@ const PedidoConfirmado = () => {
 
         if (itensError) throw itensError;
 
+        // Buscar código de retirada
         const { data: codigoData, error: codigoError } = await supabase
           .from('codigos_retirada')
           .select('codigo')
           .eq('pedido_id', pedidoId)
-          .single();
+          .maybeSingle();
 
+        // Ignorar erro específico de "nenhuma linha encontrada"
         if (codigoError && codigoError.code !== 'PGRST116') {
           throw codigoError;
         }
@@ -51,9 +66,15 @@ const PedidoConfirmado = () => {
         // Format the pedido data with its items
         const fullPedido: Pedido = {
           ...pedidoData,
-          itens: itensData || []
+          itens: itensData || [],
+          bar: {
+            id: pedidoData.bar?.id || "",
+            name: pedidoData.bar?.name || "",
+            address: pedidoData.bar?.address || ""
+          }
         };
 
+        console.log("Dados completos do pedido:", fullPedido);
         setPedido(fullPedido);
         setCodigoRetirada(codigoData?.codigo || null);
       } catch (error) {
@@ -132,23 +153,27 @@ const PedidoConfirmado = () => {
             
             <div>
               <h3 className="font-medium text-gray-700">Valor Total</h3>
-              <p className="text-gray-900">R$ {pedido.valor_total.toFixed(2)}</p>
+              <p className="text-gray-900">{formatarPreco(pedido.valor_total)}</p>
             </div>
             
             <div>
               <h3 className="font-medium text-gray-700">Itens</h3>
               <ul className="divide-y">
-                {pedido.itens.map((item) => (
-                  <li key={item.id} className="py-2">
-                    <div className="flex justify-between">
-                      <span>{item.nome_produto}</span>
-                      <span className="text-gray-600">{item.quantidade}x</span>
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      R$ {(item.preco_unitario * item.quantidade).toFixed(2)}
-                    </div>
-                  </li>
-                ))}
+                {pedido.itens && pedido.itens.length > 0 ? (
+                  pedido.itens.map((item) => (
+                    <li key={item.id} className="py-2">
+                      <div className="flex justify-between">
+                        <span>{item.nome_produto}</span>
+                        <span className="text-gray-600">{item.quantidade}x</span>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {formatarPreco(item.preco_unitario * item.quantidade)}
+                      </div>
+                    </li>
+                  ))
+                ) : (
+                  <li className="py-2 text-gray-500">Nenhum item encontrado</li>
+                )}
               </ul>
             </div>
           </div>

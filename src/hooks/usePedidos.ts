@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
 import { Pedido, PedidoItem, ItemAgregado } from "@/types/pedidos";
+import { formatarPreco, formatarData } from "@/components/pedidos/verificar-retirada/utils";
 
 export const usePedidos = () => {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
@@ -40,7 +41,7 @@ export const usePedidos = () => {
             created_at, 
             valor_total, 
             bar_id,
-            bars:bar_id (id, name, address)
+            bar:bar_id (id, name, address)
           `)
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
@@ -64,9 +65,9 @@ export const usePedidos = () => {
               created_at: pedido.created_at,
               valor_total: pedido.valor_total,
               bar: {
-                id: pedido.bars?.id || "",
-                name: pedido.bars?.name || "",
-                address: pedido.bars?.address || ""
+                id: pedido.bar?.id || "",
+                name: pedido.bar?.name || "",
+                address: pedido.bar?.address || ""
               },
               itens: itensData || []
             };

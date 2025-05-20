@@ -39,9 +39,14 @@ export const useCodigoRetirada = () => {
         .from("codigos_retirada")
         .select("*")
         .eq("codigo", codigoInput)
-        .single();
+        .maybeSingle(); // Usando maybeSingle em vez de single para evitar erro
       
       if (error) throw error;
+      if (!data) {
+        setError("Código de retirada não encontrado.");
+        setLoading(false);
+        return;
+      }
       
       console.log("Código encontrado:", data);
       
@@ -63,12 +68,24 @@ export const useCodigoRetirada = () => {
           valor_total,
           status,
           user_id,
-          bars:bar_id (name, address)
+          bar:bar_id (
+            name,
+            address
+          )
         `)
         .eq("id", data.pedido_id)
-        .single();
+        .maybeSingle(); // Usando maybeSingle em vez de single
       
-      if (pedidoError) throw pedidoError;
+      if (pedidoError) {
+        console.error("Erro ao buscar pedido:", pedidoError);
+        throw pedidoError;
+      }
+      
+      if (!pedidoData) {
+        setError("Pedido não encontrado para este código.");
+        setLoading(false);
+        return;
+      }
       
       console.log("Dados do pedido:", pedidoData);
       
@@ -80,8 +97,8 @@ export const useCodigoRetirada = () => {
         status: pedidoData.status,
         user_id: pedidoData.user_id,
         bars: {
-          name: pedidoData.bars?.name || "",
-          address: pedidoData.bars?.address || ""
+          name: pedidoData.bar?.name || "",
+          address: pedidoData.bar?.address || ""
         }
       });
       
