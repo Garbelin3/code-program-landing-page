@@ -223,6 +223,7 @@ const OwnerDashboard = ({
     </>;
 };
 
+// Employee Dashboard Component
 const EmployeeDashboard = ({
   profileData,
   barData

@@ -9,7 +9,7 @@ export const useCodigoRetirada = () => {
   const [loading, setLoading] = useState(false);
   const [codigoRetirada, setCodigoRetirada] = useState<CodigoRetirada | null>(null);
   const [pedido, setPedido] = useState<PedidoBasic | null>(null);
-  const [itensRetirados, setItensRetirados] = useState<ItensRetirada[]>([]);
+  const [itensRetirados, setItensRetirados] = useState<ItemRetirada[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   
@@ -181,7 +181,7 @@ export const useCodigoRetirada = () => {
     loading,
     codigoRetirada,
     pedido,
-    itemRetirados,
+    itensRetirados,
     error,
     success,
     handleCodigoChange,

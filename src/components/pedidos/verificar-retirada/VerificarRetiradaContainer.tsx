@@ -14,7 +14,7 @@ export const VerificarRetiradaContainer = () => {
     loading,
     codigoRetirada,
     pedido,
-    itemRetirados,
+    itensRetirados,
     error,
     success,
     handleCodigoChange,
