@@ -36,7 +36,7 @@ interface PedidoBasic {
   valor_total: number;
   status: string;
   user_id: string;
-  bars: BarInfo;
+  bars: BarInfo; // Changed from array to object
 }
 
 export const VerificarRetirada = () => {
@@ -127,16 +127,17 @@ export const VerificarRetirada = () => {
       console.log("Dados de itens brutos:", data.itens);
       
       // Converter o objeto de itens para um array mais fácil de usar
-      if (data.itens) {
+      if (data.itens && typeof data.itens === 'object') {
+        // Garantir que estamos trabalhando com um objeto para converter em array
         const items: ItemRetirada[] = Object.entries(data.itens).map(([nome, quantidade]) => ({
           nome_produto: nome,
-          quantidade: quantidade as number
+          quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
         })).filter(item => item.quantidade > 0);
         
         console.log("Items processados para exibição:", items);
         setItemsRetirados(items);
       } else {
-        console.error("Nenhum item encontrado no código de retirada");
+        console.error("Nenhum item encontrado ou formato inválido no código de retirada");
         // Atribuir array vazio para evitar erros de renderização
         setItemsRetirados([]);
       }
