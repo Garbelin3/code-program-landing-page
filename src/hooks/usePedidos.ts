@@ -14,7 +14,7 @@ export const usePedidos = () => {
   const [codigoRetirada, setCodigoRetirada] = useState("");
   const [qrVisible, setQrVisible] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [itensAgregados, setItensAgregados] = useState<ItemAgregado[]>([]);
+  const [itensAgregados, setItensAgregados] = useState<ItensAgregado[]>([]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -146,7 +146,7 @@ itensPorNome[item.nome_produto].itens.push(item);
     
     // Converter o objeto em array
     const todosItemAgregados = Object.values(itensPorNome);
-    setItemAgregados(todosItemAgregados);
+    setItensAgregados(todosItemAgregados);
   };
   
   const gerarCodigoRetirada = () => {

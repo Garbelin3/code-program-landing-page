@@ -12,11 +12,11 @@ const MeusPedidos = () => {
     pedidos, 
     loading, 
     selectedPedido,
-    itemSelecionados,
+    itensSelecionados,
     retirarSheetOpen,
     codigoRetirada,
     qrVisible,
-    itemAgregados,
+    itensAgregados,
     formatarPreco,
     formatarData,
     iniciarRetirada,
@@ -71,8 +71,8 @@ const MeusPedidos = () => {
         open={retirarSheetOpen}
         setOpen={setRetirarSheetOpen}
         selectedPedido={selectedPedido}
-        itemAgregados={itemAgregados}
-        itemSelecionados={itemSelecionados}
+        itensAgregados={itensAgregados}
+        itensSelecionados={itensSelecionados}
         codigoRetirada={codigoRetirada}
         qrVisible={qrVisible}
         onConfirmarRetirada={confirmarRetirada}

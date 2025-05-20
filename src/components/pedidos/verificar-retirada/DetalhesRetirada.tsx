@@ -7,7 +7,7 @@ import { formatarData, formatarPreco } from "./utils";
 
 interface DetalhesRetiradaProps {
   pedido: PedidoBasic;
-  itensRetirados: ItemRetirada[];
+  itensRetirados: ItemRetirada[]; // Deve ser itensRetirados, não itemRetirados
   codigoRetirada: CodigoRetirada;
   onConfirmar: () => void;
   loading: boolean;
@@ -15,7 +15,7 @@ interface DetalhesRetiradaProps {
 
 export const DetalhesRetirada = ({ 
   pedido, 
-  itemRetirados, 
+  itensRetirados, // Deve ser itensRetirados, não itemRetirados
   codigoRetirada,
   onConfirmar,
   loading

@@ -9,7 +9,7 @@ export const useCodigoRetirada = () => {
   const [loading, setLoading] = useState(false);
   const [codigoRetirada, setCodigoRetirada] = useState<CodigoRetirada | null>(null);
   const [pedido, setPedido] = useState<PedidoBasic | null>(null);
-  const [itensRetirados, setItensRetirados] = useState<ItemRetirada[]>([]);
+  const [itensRetirados, setItensRetirados] = useState<ItensRetirada[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   
@@ -98,9 +98,11 @@ export const useCodigoRetirada = () => {
         status: pedidoData.status,
         user_id: pedidoData.user_id,
         bars: {
-          name: pedidoData.bar?.name || "",
-          address: pedidoData.bar?.address || ""
+          name: pedidoData.bar ? pedidoData.bar.name || "" : "",
+          address: pedidoData.bar ? pedidoData.bar.address || "" : ""
         }
+});
+
       });
       
       // Processar os item do código de retirada
@@ -181,7 +183,7 @@ export const useCodigoRetirada = () => {
     loading,
     codigoRetirada,
     pedido,
-    itensRetirados,
+    itemRetirados,
     error,
     success,
     handleCodigoChange,
