@@ -249,20 +249,6 @@ const EmployeeDashboard = ({
               
               <VerificarRetirada />
             </div>
-          
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mt-6">
-              <div className="border rounded-md p-4 bg-cyan-50 flex flex-col justify-center">
-                <h4 className="font-bold text-cyan-700 text-base sm:text-lg">Gerenciar Pedidos</h4>
-                <p className="text-sm sm:text-base text-gray-600 mt-1">
-                  Visualize e gerencie pedidos dos clientes
-                </p>
-              </div>
-              <div className="border rounded-md p-4 bg-emerald-50 flex flex-col justify-center">
-                <h4 className="font-bold text-emerald-700 text-base sm:text-lg">Ver Cardápio</h4>
-                <p className="text-sm sm:text-base text-gray-600 mt-1">
-                  Consulte os itens disponíveis no cardápio
-                </p>
-              </div>
             </div>
           </div>
         </CardContent>
