@@ -7,7 +7,7 @@ import { formatarData, formatarPreco } from "./utils";
 
 interface DetalhesRetiradaProps {
   pedido: PedidoBasic;
-  itensRetirados: ItemRetirada[];
+  itemRetirados: ItemRetirada[];
   codigoRetirada: CodigoRetirada;
   onConfirmar: () => void;
   loading: boolean;
@@ -15,7 +15,7 @@ interface DetalhesRetiradaProps {
 
 export const DetalhesRetirada = ({ 
   pedido, 
-  itensRetirados, 
+  itemRetirados, 
   codigoRetirada,
   onConfirmar,
   loading
@@ -45,8 +45,8 @@ export const DetalhesRetirada = ({
       <div>
         <h3 className="font-medium text-lg mb-2">Itens para retirada</h3>
         <div className="border rounded-md divide-y">
-          {itensRetirados && itensRetirados.length > 0 ? (
-            itensRetirados.map((item, i) => (
+          {itemRetirados && itemRetirados.length > 0 ? (
+            itemRetirados.map((item, i) => (
               <div key={i} className="p-3 flex justify-between items-center">
                 <span className="font-medium">{item.nome_produto}</span>
                 <Badge variant="outline" className="ml-2">

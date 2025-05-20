@@ -2,19 +2,19 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
-import { Pedido, PedidoItens, ItensAgregado } from "@/types/pedidos";
+import { Pedido, PedidoItem, ItemAgregado } from "@/types/pedidos";
 import { formatarPreco, formatarData } from "@/components/pedidos/verificar-retirada/utils";
 
 export const usePedidos = () => {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
-  const [itensSelecionados, setItensSelecionados] = useState<Record<string, number>>({});
+  const [itensSelecionados, setItemSelecionados] = useState<Record<string, number>>({});
   const [retirarSheetOpen, setRetirarSheetOpen] = useState(false);
   const [codigoRetirada, setCodigoRetirada] = useState("");
   const [qrVisible, setQrVisible] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [itensAgregados, setItensAgregados] = useState<ItensAgregado[]>([]);
+  const [itensAgregados, setItemAgregados] = useState<ItemAgregado[]>([]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -51,7 +51,7 @@ export const usePedidos = () => {
         console.log("Dados dos pedidos:", pedidosData);
         
         // Buscar item de cada pedido
-        const pedidosComItens = await Promise.all(
+        const pedidosComItem = await Promise.all(
           (pedidosData || []).map(async (pedido) => {
             const { data: itensData, error: itensError } = await supabaseExtended
               .from("pedido_itens")
@@ -74,7 +74,7 @@ export const usePedidos = () => {
           })
         );
         
-        setPedidos(pedidosComItens);
+        setPedidos(pedidosComItem);
       } catch (error: any) {
         toast({
           title: "Erro ao carregar pedidos",
@@ -112,24 +112,24 @@ export const usePedidos = () => {
   
   const iniciarRetirada = (pedido: Pedido) => {
     setSelectedPedido(pedido);
-    agregarItensDeTodosPedidos();
+    agregarItemDeTodosPedidos();
     
     // Resetar as seleções 
     const initialSelections: Record<string, number> = {};
-    setItensSelecionados(initialSelections);
+    setItemSelecionados(initialSelections);
     
     setRetirarSheetOpen(true);
   };
   
   // Função para agregar item iguais e calcular o total disponível de TODOS os pedidos
-  const agregarItensDeTodosPedidos = () => {
+  const agregarItemDeTodosPedidos = () => {
     // Primeiro vamos coletar todos os item com quantidade_restante > 0 de TODOS os pedidos
     const itensDisponiveis = pedidos
       .flatMap(p => p.item)
       .filter(item => item.quantidade_restante > 0);
     
     // Agrupar por nome de produto
-    const itensPorNome: Record<string, ItensAgregado> = {};
+    const itensPorNome: Record<string, ItemAgregado> = {};
     
     itensDisponiveis.forEach(item => {
       if (!itensPorNome[item.nome_produto]) {
@@ -145,8 +145,8 @@ export const usePedidos = () => {
     });
     
     // Converter o objeto em array
-    const todosItensAgregados = Object.values(itensPorNome);
-    setItensAgregados(todosItensAgregados);
+    const todosItemAgregados = Object.values(itensPorNome);
+    setItemAgregados(todosItemAgregados);
   };
   
   const gerarCodigoRetirada = () => {
@@ -172,23 +172,23 @@ export const usePedidos = () => {
         if (!item) continue;
         
         // Para cada item do mesmo produto, retirar a quantidade, começando pelos mais antigos
-        for (const pedidoItens of item.item.sort((a, b) => a.id.localeCompare(b.id))) {
+        for (const pedidoItem of item.item.sort((a, b) => a.id.localeCompare(b.id))) {
           if (quantidadeRestante <= 0) break;
           
           // Calcular quanto retirar deste item específico
-          const quantidadeRetirada = Math.min(pedidoItens.quantidade_restante, quantidadeRestante);
-          const novaQuantidade = pedidoItens.quantidade_restante - quantidadeRetirada;
+          const quantidadeRetirada = Math.min(pedidoItem.quantidade_restante, quantidadeRestante);
+          const novaQuantidade = pedidoItem.quantidade_restante - quantidadeRetirada;
           
           // Atualizar no banco de dados
           const { error } = await supabaseExtended
             .from("pedido_itens")
             .update({ quantidade_restante: novaQuantidade })
-            .eq("id", pedidoItens.id);
+            .eq("id", pedidoItem.id);
           
           if (error) throw error;
           
           // Atualizar localmente para refletir na interface
-          pedidoItens.quantidade_restante = novaQuantidade;
+          pedidoItem.quantidade_restante = novaQuantidade;
           
           // Reduzir a quantidade restante a ser retirada
           quantidadeRestante -= quantidadeRetirada;
@@ -215,21 +215,21 @@ export const usePedidos = () => {
       setPedidos(prevPedidos => {
         return prevPedidos.map(pedido => {
           // Encontrar os item atualizados que pertencem a este pedido
-          const updatedItens = pedido.item.map(item => {
+          const updatedItem = pedido.item.map(item => {
             const agregado = itensAgregados.find(a => a.nome_produto === item.nome_produto);
             if (!agregado) return item;
             
             // Encontrar o item específico nos item agregados
-            const updatedItens = agregado.item.find(i => i.id === item.id);
-            if (updatedItens) {
-              return { ...item, quantidade_restante: updatedItens.quantidade_restante };
+            const updatedItem = agregado.item.find(i => i.id === item.id);
+            if (updatedItem) {
+              return { ...item, quantidade_restante: updatedItem.quantidade_restante };
             }
             return item;
           });
           
           return {
             ...pedido,
-            item: updatedItens
+            item: updatedItem
           };
         });
       });
@@ -251,8 +251,8 @@ export const usePedidos = () => {
     setQrVisible(false);
     setCodigoRetirada("");
     setSelectedPedido(null);
-    setItensAgregados([]);
-    setItensSelecionados({});
+    setItemAgregados([]);
+    setItemSelecionados({});
   };
 
   return {
@@ -270,6 +270,6 @@ export const usePedidos = () => {
     confirmarRetirada,
     fecharSheet,
     setRetirarSheetOpen,
-    setItensSelecionados
+    setItemSelecionados
   };
 };

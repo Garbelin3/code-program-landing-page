@@ -96,7 +96,7 @@ const Dashboard = ({
     }
   };
   if (loading) {
-    return <div className="min-h-screen flex justify-center items-center bg-gray-50">
+    return <div className="min-h-screen flex justify-center item-center bg-gray-50">
         <p className="text-lg text-gray-600">Carregando...</p>
       </div>;
   }
@@ -119,20 +119,20 @@ const Dashboard = ({
   };
   return <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
-        <div className="container mx-auto py-4 px-6 flex justify-between items-center">
-          <div className="flex items-center">
+        <div className="container mx-auto py-4 px-6 flex justify-between item-center">
+          <div className="flex item-center">
             <h1 className="text-2xl font-bold text-gray-900">PedeBar</h1>
             {profileData && profileData.role !== 'user' && <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                 {profileData.role === 'dono' ? 'Dono' : profileData.role === 'funcionario' ? 'Funcionário' : profileData.role === 'caixa' ? 'Caixa' : 'Admin'}
               </span>}
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="flex item-center space-x-2 sm:space-x-4">
             {profileData && profileData.role === 'user' && (
               <Link to="/meus-pedidos">
                 <Button className="w-full sm:w-auto">Meus Pedidos</Button>
               </Link>
             )}
-            <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleLogout} className="flex item-center gap-2">
               <LogOut className="h-4 w-4" /> Sair
             </Button>
           </div>
@@ -210,10 +210,10 @@ const OwnerDashboard = ({
                   />
                 )}
               </div>
-              <div className="border rounded-md p-4 bg-purple-50 flex items-center justify-center">
+              <div className="border rounded-md p-4 bg-purple-50 flex item-center justify-center">
                 <h4 className="font-bold text-purple-700 text-center text-base sm:text-lg">Gerenciar Funcionários</h4>
               </div>
-              <div className="border rounded-md p-4 bg-amber-50 flex items-center justify-center">
+              <div className="border rounded-md p-4 bg-amber-50 flex item-center justify-center">
                 <h4 className="font-bold text-amber-700 text-center text-base sm:text-lg">Relatórios Financeiros</h4>
               </div>
             </div>
