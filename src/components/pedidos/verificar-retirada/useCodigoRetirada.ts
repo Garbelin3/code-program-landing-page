@@ -102,13 +102,13 @@ export const useCodigoRetirada = () => {
         }
       });
       
-      // Processar os itens do código de retirada
-      console.log("Dados de itens brutos:", data.itens);
+      // Processar os items do código de retirada
+      console.log("Dados de items brutos:", data.items);
       
-      // Converter o objeto de itens para um array mais fácil de usar
-      if (data.itens && typeof data.itens === 'object') {
+      // Converter o objeto de items para um array mais fácil de usar
+      if (data.items && typeof data.items === 'object') {
         // Garantir que estamos trabalhando com um objeto para converter em array
-        const items: ItemRetirada[] = Object.entries(data.itens).map(([nome, quantidade]) => ({
+        const items: ItemRetirada[] = Object.entries(data.items).map(([nome, quantidade]) => ({
           nome_produto: nome,
           quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
         })).filter(item => item.quantidade > 0);
@@ -151,7 +151,7 @@ export const useCodigoRetirada = () => {
       
       toast({
         title: "Retirada confirmada",
-        description: "Os itens foram entregues com sucesso."
+        description: "Os items foram entregues com sucesso."
       });
       
     } catch (error: any) {
