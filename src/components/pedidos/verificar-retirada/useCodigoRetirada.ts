@@ -9,7 +9,7 @@ export const useCodigoRetirada = () => {
   const [loading, setLoading] = useState(false);
   const [codigoRetirada, setCodigoRetirada] = useState<CodigoRetirada | null>(null);
   const [pedido, setPedido] = useState<PedidoBasic | null>(null);
-  const [itensRetirados, setItensRetirados] = useState<ItensRetirada[]>([]);
+  const [itensRetirados, setItensRetirados] = useState<ItemRetirada[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   
@@ -98,11 +98,9 @@ export const useCodigoRetirada = () => {
         status: pedidoData.status,
         user_id: pedidoData.user_id,
         bars: {
-          name: pedidoData.bar ? pedidoData.bar.name || "" : "",
-          address: pedidoData.bar ? pedidoData.bar.address || "" : ""
+          name: pedidoData.bar?.name || "",
+          address: pedidoData.bar?.address || ""
         }
-});
-
       });
       
       // Processar os item do código de retirada
@@ -111,13 +109,13 @@ export const useCodigoRetirada = () => {
       // Converter o objeto de item para um array mais fácil de usar
       if (data.itens && typeof data.itens === 'object') {
         // Garantir que estamos trabalhando com um objeto para converter em array
-        const item: ItemRetirada[] = Object.entries(data.itens).map(([nome, quantidade]) => ({
+        const itens: ItemRetirada[] = Object.entries(data.itens).map(([nome, quantidade]) => ({
           nome_produto: nome,
           quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
         })).filter(item => item.quantidade > 0);
         
         console.log("Itens processados para exibição:", item);
-        setItensRetirados(item);
+        setItensRetirados(itens);
       } else {
         console.error("Nenhum item encontrado ou formato inválido no código de retirada");
         // Atribuir array vazio para evitar erros de renderização
@@ -183,7 +181,7 @@ export const useCodigoRetirada = () => {
     loading,
     codigoRetirada,
     pedido,
-    itemRetirados,
+    itensRetirados,
     error,
     success,
     handleCodigoChange,
