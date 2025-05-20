@@ -231,7 +231,8 @@ const EmployeeDashboard = ({
   profileData: ProfileData;
   barData: BarData | null;
 }) => {
-  return <>
+  return (
+    <>
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-2xl sm:text-3xl">Painel do Funcionário</CardTitle>
@@ -249,12 +250,13 @@ const EmployeeDashboard = ({
               
               <VerificarRetirada />
             </div>
-            </div>
           </div>
         </CardContent>
       </Card>
-    </>;
+    </>
+  );
 };
+
 
 // Cashier Dashboard Component
 const CashierDashboard = ({
