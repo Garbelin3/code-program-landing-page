@@ -9,7 +9,7 @@ export const usePedidos = () => {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
-  const [itensSelecionados, setItemSelecionados] = useState<Record<string, number>>({});
+  const [itemSelecionados, setItemSelecionados] = useState<Record<string, number>>({});
   const [retirarSheetOpen, setRetirarSheetOpen] = useState(false);
   const [codigoRetirada, setCodigoRetirada] = useState("");
   const [qrVisible, setQrVisible] = useState(false);

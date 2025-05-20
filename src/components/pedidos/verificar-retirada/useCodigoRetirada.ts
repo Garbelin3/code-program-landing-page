@@ -9,7 +9,7 @@ export const useCodigoRetirada = () => {
   const [loading, setLoading] = useState(false);
   const [codigoRetirada, setCodigoRetirada] = useState<CodigoRetirada | null>(null);
   const [pedido, setPedido] = useState<PedidoBasic | null>(null);
-  const [itensRetirados, setItensRetirados] = useState<ItemRetirada[]>([]);
+  const [itemRetirados, setItensRetirados] = useState<ItemRetirada[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   
@@ -102,19 +102,19 @@ export const useCodigoRetirada = () => {
         }
       });
       
-      // Processar os itens do código de retirada
-      console.log("Dados de itens brutos:", data.itens);
+      // Processar os item do código de retirada
+      console.log("Dados de item brutos:", data.item);
       
-      // Converter o objeto de itens para um array mais fácil de usar
-      if (data.itens && typeof data.itens === 'object') {
+      // Converter o objeto de item para um array mais fácil de usar
+      if (data.item && typeof data.item === 'object') {
         // Garantir que estamos trabalhando com um objeto para converter em array
-        const itens: ItemRetirada[] = Object.entries(data.itens).map(([nome, quantidade]) => ({
+        const item: ItemRetirada[] = Object.entries(data.item).map(([nome, quantidade]) => ({
           nome_produto: nome,
           quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
         })).filter(item => item.quantidade > 0);
         
-        console.log("Itens processados para exibição:", itens);
-        setItensRetirados(itens);
+        console.log("Itens processados para exibição:", item);
+        setItensRetirados(item);
       } else {
         console.error("Nenhum item encontrado ou formato inválido no código de retirada");
         // Atribuir array vazio para evitar erros de renderização
@@ -151,7 +151,7 @@ export const useCodigoRetirada = () => {
       
       toast({
         title: "Retirada confirmada",
-        description: "Os itens foram entregues com sucesso."
+        description: "Os item foram entregues com sucesso."
       });
       
     } catch (error: any) {
@@ -180,7 +180,7 @@ export const useCodigoRetirada = () => {
     loading,
     codigoRetirada,
     pedido,
-    itensRetirados,
+    itemRetirados,
     error,
     success,
     handleCodigoChange,
