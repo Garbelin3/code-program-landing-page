@@ -77,7 +77,7 @@ export const VerificarRetiradaContainer = () => {
           pedido && (
             <DetalhesRetirada
               pedido={pedido}
-              itemRetirados={itemRetirados}
+              itensRetirados={itensRetirados}
               codigoRetirada={codigoRetirada}
               onConfirmar={confirmarEntrega}
               loading={loading}

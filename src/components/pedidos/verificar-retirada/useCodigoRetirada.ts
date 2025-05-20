@@ -9,7 +9,7 @@ export const useCodigoRetirada = () => {
   const [loading, setLoading] = useState(false);
   const [codigoRetirada, setCodigoRetirada] = useState<CodigoRetirada | null>(null);
   const [pedido, setPedido] = useState<PedidoBasic | null>(null);
-  const [itemRetirados, setItensRetirados] = useState<ItemRetirada[]>([]);
+  const [itensRetirados, setItensRetirados] = useState<ItensRetirada[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   
@@ -34,12 +34,13 @@ export const useCodigoRetirada = () => {
     setSuccess(false);
     
     try {
-      // Buscar o código na tabela codigos_retirada
-      const { data, error } = await supabaseExtended
-        .from("codigos_retirada")
-        .select("*")
-        .eq("codigo", codigoInput)
-        .maybeSingle(); // Usando maybeSingle em vez de single para evitar erro
+    // Buscar o código na tabela codigos_retirada
+    const { data, error } = await supabaseExtended
+      .from("codigos_retirada")
+      .select("*")
+      .eq("codigo", codigoInput)
+      .maybeSingle();
+
       
       if (error) throw error;
       if (!data) {
@@ -103,12 +104,12 @@ export const useCodigoRetirada = () => {
       });
       
       // Processar os item do código de retirada
-      console.log("Dados de item brutos:", data.item);
+      console.log("Dados de item brutos:", data.itens);
       
       // Converter o objeto de item para um array mais fácil de usar
-      if (data.item && typeof data.item === 'object') {
+      if (data.itens && typeof data.itens === 'object') {
         // Garantir que estamos trabalhando com um objeto para converter em array
-        const item: ItemRetirada[] = Object.entries(data.item).map(([nome, quantidade]) => ({
+        const item: ItemRetirada[] = Object.entries(data.itens).map(([nome, quantidade]) => ({
           nome_produto: nome,
           quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
         })).filter(item => item.quantidade > 0);

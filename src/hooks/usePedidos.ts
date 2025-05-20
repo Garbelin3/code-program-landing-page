@@ -9,12 +9,12 @@ export const usePedidos = () => {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
-  const [itemSelecionados, setItemSelecionados] = useState<Record<string, number>>({});
+  const [itensSelecionados, setItensSelecionados] = useState<Record<string, number>>({});
   const [retirarSheetOpen, setRetirarSheetOpen] = useState(false);
   const [codigoRetirada, setCodigoRetirada] = useState("");
   const [qrVisible, setQrVisible] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [itensAgregados, setItemAgregados] = useState<ItemAgregado[]>([]);
+  const [itensAgregados, setItensAgregados] = useState<ItemAgregado[]>([]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -61,16 +61,16 @@ export const usePedidos = () => {
             if (itensError) throw itensError;
             
             return {
-              id: pedido.id,
-              created_at: pedido.created_at,
-              valor_total: pedido.valor_total,
-              bar: {
-                id: pedido.bar?.id || "",
-                name: pedido.bar?.name || "",
-                address: pedido.bar?.address || ""
-              },
-              item: itensData || []
-            };
+            id: pedido.id,
+            created_at: pedido.created_at,
+            valor_total: pedido.valor_total,
+            bar: {
+              id: pedido.bar?.id || "",
+              name: pedido.bar?.name || "",
+              address: pedido.bar?.address || ""
+            },
+            itens: itensData || [] // Alterado para "itens"
+          };
           })
         );
         
@@ -116,7 +116,7 @@ export const usePedidos = () => {
     
     // Resetar as seleções 
     const initialSelections: Record<string, number> = {};
-    setItemSelecionados(initialSelections);
+    setItensSelecionados(initialSelections);
     
     setRetirarSheetOpen(true);
   };
@@ -124,23 +124,23 @@ export const usePedidos = () => {
   // Função para agregar item iguais e calcular o total disponível de TODOS os pedidos
   const agregarItemDeTodosPedidos = () => {
     // Primeiro vamos coletar todos os item com quantidade_restante > 0 de TODOS os pedidos
-    const itensDisponiveis = pedidos
-      .flatMap(p => p.item)
-      .filter(item => item.quantidade_restante > 0);
+const itensDisponiveis = pedidos
+  .flatMap(p => p.itens)
+  .filter(item => item.quantidade_restante > 0);
     
     // Agrupar por nome de produto
     const itensPorNome: Record<string, ItemAgregado> = {};
     
     itensDisponiveis.forEach(item => {
       if (!itensPorNome[item.nome_produto]) {
-        itensPorNome[item.nome_produto] = {
-          nome_produto: item.nome_produto,
-          item: [],
-          total_disponivel: 0
-        };
-      }
-      
-      itensPorNome[item.nome_produto].item.push(item);
+  itensPorNome[item.nome_produto] = {
+    nome_produto: item.nome_produto,
+    itens: [], // Alterado para "itens"
+    total_disponivel: 0
+  };
+}
+
+itensPorNome[item.nome_produto].itens.push(item);
       itensPorNome[item.nome_produto].total_disponivel += item.quantidade_restante;
     });
     
@@ -168,11 +168,10 @@ export const usePedidos = () => {
         let quantidadeRestante = quantidadeTotal;
         
         // Encontrar todos os item desse produto
-        const item = itensAgregados.find(i => i.nome_produto === nomeProduto);
-        if (!item) continue;
-        
-        // Para cada item do mesmo produto, retirar a quantidade, começando pelos mais antigos
-        for (const pedidoItem of item.item.sort((a, b) => a.id.localeCompare(b.id))) {
+        const itemAgregado = itensAgregados.find(i => i.nome_produto === nomeProduto);
+if (!itemAgregado) continue;
+
+for (const pedidoItem of itemAgregado.itens.sort((a, b) => a.id.localeCompare(b.id))) {
           if (quantidadeRestante <= 0) break;
           
           // Calcular quanto retirar deste item específico
@@ -198,13 +197,13 @@ export const usePedidos = () => {
       console.log("Salvando código de retirada:", codigo, "com item:", itensSelecionados);
       
       // Salvar o código de retirada no banco de dados
-      const { error: codigoError } = await supabaseExtended
-        .from("codigos_retirada")
-        .insert({
-          codigo: codigo,
-          pedido_id: selectedPedido.id,
-          item: itensSelecionados,
-          usado: false
+    const { error: codigoError } = await supabaseExtended
+      .from("codigos_retirada")
+      .insert({
+        codigo: codigo,
+        pedido_id: selectedPedido.id,
+        itens: itensSelecionados, // Alterado para "itens"
+        usado: false
         });
       
       if (codigoError) throw codigoError;
@@ -215,12 +214,11 @@ export const usePedidos = () => {
       setPedidos(prevPedidos => {
         return prevPedidos.map(pedido => {
           // Encontrar os item atualizados que pertencem a este pedido
-          const updatedItem = pedido.item.map(item => {
+          const updatedItens = pedido.itens.map(item => {
             const agregado = itensAgregados.find(a => a.nome_produto === item.nome_produto);
             if (!agregado) return item;
             
-            // Encontrar o item específico nos item agregados
-            const updatedItem = agregado.item.find(i => i.id === item.id);
+            const updatedItem = agregado.itens.find(i => i.id === item.id);
             if (updatedItem) {
               return { ...item, quantidade_restante: updatedItem.quantidade_restante };
             }
@@ -229,7 +227,7 @@ export const usePedidos = () => {
           
           return {
             ...pedido,
-            item: updatedItem
+            itens: updatedItens
           };
         });
       });
@@ -252,7 +250,7 @@ export const usePedidos = () => {
     setCodigoRetirada("");
     setSelectedPedido(null);
     setItemAgregados([]);
-    setItemSelecionados({});
+    setItensSelecionados({});
   };
 
   return {
@@ -270,6 +268,6 @@ export const usePedidos = () => {
     confirmarRetirada,
     fecharSheet,
     setRetirarSheetOpen,
-    setItemSelecionados
+    setItensSelecionados
   };
 };
