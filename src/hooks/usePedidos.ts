@@ -59,7 +59,6 @@ export const usePedidos = () => {
             
             if (itensError) throw itensError;
             
-            // Fix type issue - bars is an object, not an array
             return {
               id: pedido.id,
               created_at: pedido.created_at,
