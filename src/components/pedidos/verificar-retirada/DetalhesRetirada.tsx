@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { ItemRetirada, PedidoBasic, CodigoRetirada } from "./types";
-import { formatarData } from "./utils";
+import { formatarData, formatarPreco } from "./utils";
 
 interface DetalhesRetiradaProps {
   pedido: PedidoBasic;

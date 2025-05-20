@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { QrCodeIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QrScanner } from "./QrScanner";

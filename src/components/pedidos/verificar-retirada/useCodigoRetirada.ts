@@ -80,8 +80,8 @@ export const useCodigoRetirada = () => {
         status: pedidoData.status,
         user_id: pedidoData.user_id,
         bars: {
-          name: pedidoData.bars?.name || "",
-          address: pedidoData.bars?.address || ""
+          name: pedidoData.bars.name || "",
+          address: pedidoData.bars.address || ""
         }
       });
       
