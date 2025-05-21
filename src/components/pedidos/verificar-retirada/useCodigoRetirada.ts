@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatarPreco } from "./utils";
-import { PedidoBasic, BarInfo } from "./types";
+import { PedidoBasic, BarInfo, ItemRetirada } from "./types";
 
 interface Item {
   id: string;
@@ -13,11 +13,6 @@ interface Item {
   quantidade_restante: number;
   preco_unitario: number;
   quantidade_selecionada?: number;
-}
-
-interface ItemRetirada {
-  produto: string;
-  quantidade: number;
 }
 
 interface InfoPedido {
@@ -120,7 +115,7 @@ export const useCodigoRetirada = () => {
         itensSelecionados
       )) {
         itensParaRetirar.push({
-          produto: nomeProduto,
+          nome_produto: nomeProduto,
           quantidade: quantidade as number,
         });
       }
@@ -176,7 +171,7 @@ export const useCodigoRetirada = () => {
       // Para cada item retirado, atualizar a quantidade_restante no pedido_itens
       for (const itemRetirada of itensRetirada) {
         const itensPedido = pedido?.itens.filter(
-          (item) => item.nome_produto === itemRetirada.produto
+          (item) => item.nome_produto === itemRetirada.nome_produto
         );
 
         if (!itensPedido || itensPedido.length === 0) continue;

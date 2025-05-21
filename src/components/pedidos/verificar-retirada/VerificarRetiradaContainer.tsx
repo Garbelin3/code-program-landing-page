@@ -11,16 +11,16 @@ import { toast } from "@/components/ui/use-toast";
 
 export const VerificarRetiradaContainer = () => {
   const {
-    codigo: codigoInput,
-    handleCodigo: handleCodigoChange,
+    codigo,
     loading,
     pedido,
     error,
     success,
     codigoRetirada,
-    verificarCodigo: buscarCodigo,
-    confirmarRetirada: confirmarEntrega,
-    resetarCodigo: resetForm,
+    handleCodigo,
+    verificarCodigo,
+    confirmarRetirada,
+    resetarCodigo,
     setCodigoInput,
     formatarPreco
   } = useCodigoRetirada();
@@ -59,18 +59,18 @@ export const VerificarRetiradaContainer = () => {
 
   // Função de reset aprimorada
   const handleReset = useCallback(() => {
-    resetForm();
+    resetarCodigo();
     // Recarregar a página ao resetar
     window.location.reload();
-  }, [resetForm]);
+  }, [resetarCodigo]);
 
   // Função para verificar código com recarregamento automático
   const verificarComRecarregamento = useCallback(() => {
-    console.log("Verificando código com recarregamento:", codigoInput);
+    console.log("Verificando código com recarregamento:", codigo);
     // Salvar o código no localStorage e recarregar a página
-    if (codigoInput && codigoInput.trim() !== "") {
-      localStorage.setItem('lastCode', codigoInput.trim());
-      console.log("Código salvo no localStorage:", codigoInput.trim());
+    if (codigo && codigo.trim() !== "") {
+      localStorage.setItem('lastCode', codigo.trim());
+      console.log("Código salvo no localStorage:", codigo.trim());
       window.location.reload();
     } else {
       toast({
@@ -79,7 +79,7 @@ export const VerificarRetiradaContainer = () => {
         variant: "destructive"
       });
     }
-  }, [codigoInput]);
+  }, [codigo]);
 
   // Verificar código salvo no localStorage e executar busca automaticamente
   useEffect(() => {
@@ -108,7 +108,7 @@ export const VerificarRetiradaContainer = () => {
         try {
           // Usar o parâmetro codigoExplicito para passar o código diretamente
           // Isso evita problemas de sincronização de estado
-          buscarCodigo(true, codigoLimpo);
+          verificarCodigo(true, codigoLimpo);
         } catch (error) {
           console.error("Erro ao buscar código:", error);
           toast({
@@ -124,7 +124,7 @@ export const VerificarRetiradaContainer = () => {
         }
       }, 800);
     }
-  }, [buscarCodigo, setCodigoInput]);
+  }, [verificarCodigo, setCodigoInput]);
   
   return (
     <Card className="w-full max-w-md mx-auto" key={resetKey}>
@@ -158,8 +158,8 @@ export const VerificarRetiradaContainer = () => {
               
               <TabsContent value="manual" className="space-y-4">
                 <CodigoForm
-                  codigoInput={codigoInput}
-                  onChange={handleCodigoChange}
+                  codigoInput={codigo}
+                  onChange={handleCodigo}
                   onSubmit={verificarComRecarregamento}
                   error={error}
                   loading={loading}
@@ -179,7 +179,7 @@ export const VerificarRetiradaContainer = () => {
             pedido={pedido}
             itensRetirados={itensRetirados}
             codigoRetirada={codigoRetirada}
-            onConfirmar={confirmarEntrega}
+            onConfirmar={confirmarRetirada}
             onReset={handleReset}
             loading={loading}
           />

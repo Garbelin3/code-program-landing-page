@@ -54,7 +54,7 @@ export const usePedidos = () => {
         
         // Buscar item de cada pedido
         const pedidosComItem = await Promise.all(
-          (pedidosData || []).map(async (pedido) => {
+          (pedidosData || []).map(async (pedido: any) => {
             const { data: itensData, error: itensError } = await supabaseExtended
               .from("pedido_itens")
               .select("*")

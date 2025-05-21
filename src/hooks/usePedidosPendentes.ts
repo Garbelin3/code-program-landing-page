@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
-import { toast } from "@/hooks/use-toast";
-import { Pedido, Bar } from "@/types/pedidos";
 import { formatarPreco, formatarData } from "@/components/pedidos/verificar-retirada/utils";
+import { toast } from "@/hooks/use-toast";
+import { navegarPagamento } from "@/lib/navegarPagamento";
+import { Pedido } from "@/types/pedidos";
 
 export const usePedidosPendentes = () => {
   const [pedidosPendentes, setPedidosPendentes] = useState<Pedido[]>([]);
@@ -20,14 +22,14 @@ export const usePedidosPendentes = () => {
     
     getUser();
   }, []);
-  
+
   useEffect(() => {
     if (!user) return;
     
     const fetchPedidosPendentes = async () => {
       setLoadingPendentes(true);
       try {
-        // Buscar pedidos com status "aguardando_pagamento"
+        // Buscar pedidos pendentes (apenas status "pendente")
         const { data: pedidosData, error: pedidosError } = await supabaseExtended
           .from("pedidos")
           .select(`
@@ -36,28 +38,18 @@ export const usePedidosPendentes = () => {
             valor_total, 
             bar_id,
             bar:bar_id (id, name, address),
-            status,
-            data_criacao
+            stripe_session_id,
+            status
           `)
           .eq("user_id", user.id)
-          .eq("status", "aguardando_pagamento")
+          .eq("status", "pendente")
           .order("created_at", { ascending: false });
         
         if (pedidosError) throw pedidosError;
         
-        // Filtrar pedidos que não expiram (criados há mais de 30 minutos)
-        const agora = new Date();
-        const pedidosValidos = (pedidosData || []).filter(pedido => {
-          if (!pedido.data_criacao) return true;
-          
-          const dataCriacao = new Date(pedido.data_criacao);
-          const diferencaMinutos = (agora.getTime() - dataCriacao.getTime()) / (1000 * 60);
-          return diferencaMinutos <= 30; // Menos de 30 minutos
-        });
-        
-        // Buscar itens de cada pedido
-        const pedidosComItens = await Promise.all(
-          pedidosValidos.map(async (pedido) => {
+        // Buscar item de cada pedido
+        const pedidosPendentesComItem = await Promise.all(
+          (pedidosData || []).map(async (pedido: any) => {
             const { data: itensData, error: itensError } = await supabaseExtended
               .from("pedido_itens")
               .select("*")
@@ -70,6 +62,7 @@ export const usePedidosPendentes = () => {
               created_at: pedido.created_at,
               valor_total: pedido.valor_total,
               status: pedido.status,
+              stripe_session_id: pedido.stripe_session_id,
               bar: {
                 id: pedido.bar.id,
                 name: pedido.bar.name,
@@ -80,23 +73,7 @@ export const usePedidosPendentes = () => {
           })
         );
         
-        // Cancelar pedidos expirados (criados há mais de 30 minutos)
-        for (const pedido of (pedidosData || [])) {
-          if (!pedido.data_criacao) continue;
-          
-          const dataCriacao = new Date(pedido.data_criacao);
-          const diferencaMinutos = (agora.getTime() - dataCriacao.getTime()) / (1000 * 60);
-          
-          if (diferencaMinutos > 30) {
-            // Cancelar pedido expirado
-            await supabaseExtended
-              .from("pedidos")
-              .update({ status: "cancelado" })
-              .eq("id", pedido.id);
-          }
-        }
-        
-        setPedidosPendentes(pedidosComItens);
+        setPedidosPendentes(pedidosPendentesComItem);
       } catch (error: any) {
         toast({
           title: "Erro ao carregar pedidos pendentes",
@@ -112,69 +89,59 @@ export const usePedidosPendentes = () => {
     if (user) {
       fetchPedidosPendentes();
       
-      // Configurar um intervalo para verificar pedidos pendentes periodicamente
-      const interval = setInterval(fetchPedidosPendentes, 60000); // a cada minuto
-      
-      return () => clearInterval(interval);
+      // Escutar mudanças na tabela de pedidos para atualizar a lista
+      const pedidosChannel = supabase
+        .channel('custom-all-channel')
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `user_id=eq.${user.id}` },
+          () => {
+            fetchPedidosPendentes();
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(pedidosChannel);
+      };
     }
   }, [user]);
-
+  
   const retomarPagamento = async (pedidoId: string) => {
     try {
-      // Buscar dados do pedido
-      const { data: pedido, error: pedidoError } = await supabaseExtended
+      // Buscar o stripe_session_id do pedido
+      const { data: pedidoData, error: pedidoError } = await supabaseExtended
         .from("pedidos")
-        .select("*, bar:bar_id(*)")
+        .select("stripe_session_id")
         .eq("id", pedidoId)
         .single();
-        
+      
       if (pedidoError) throw pedidoError;
       
-      // Verificar se o pedido ainda está aguardando pagamento
-      if (pedido.status !== "aguardando_pagamento") {
-        toast({
-          title: "Pedido não disponível",
-          description: "Este pedido não está mais disponível para pagamento",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // Buscar itens do pedido
-      const { data: itensData, error: itensError } = await supabaseExtended
-        .from("pedido_itens")
-        .select("*")
-        .eq("pedido_id", pedidoId);
-        
-      if (itensError) throw itensError;
-      
-      const itens = itensData.map(item => ({
-        id: item.produto_id,
-        nome: item.nome_produto,
-        preco: item.preco_unitario,
-        quantidade: item.quantidade
-      }));
-      
-      // Criar nova sessão de pagamento Stripe
-      const { data: stripeData, error: stripeError } = await supabase.functions.invoke(
-        "create-stripe-payment",
-        {
-          body: {
-            pedidoId: pedido.id,
-            barId: pedido.bar_id,
-            valorTotal: pedido.valor_total,
-            items: itens
-          }
-        }
-      );
-      
-      if (stripeError) throw stripeError;
-      
-      if (stripeData.url) {
-        // Redirecionar para a página de pagamento do Stripe
-        window.location.href = stripeData.url;
+      if (pedidoData && pedidoData.stripe_session_id) {
+        // Redirecionar para a página de checkout do Stripe
+        navegarPagamento(pedidoData.stripe_session_id);
       } else {
-        throw new Error("Não foi possível criar a sessão de pagamento");
+        // Se não tiver session_id, precisamos criar um novo
+        const response = await fetch(`/api/create-stripe-payment?pedido_id=${pedidoId}`, {
+          method: 'POST',
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Erro ao processar pagamento");
+        }
+        
+        const { session_url, session_id } = await response.json();
+        
+        // Atualizar o pedido com o novo session_id
+        await supabaseExtended
+          .from("pedidos")
+          .update({ stripe_session_id: session_id })
+          .eq("id", pedidoId);
+        
+        // Redirecionar para a nova sessão
+        navegarPagamento(session_url);
       }
     } catch (error: any) {
       toast({
@@ -186,8 +153,8 @@ export const usePedidosPendentes = () => {
     }
   };
 
-  return {
-    pedidosPendentes,
+  return { 
+    pedidosPendentes, 
     loadingPendentes,
     formatarPreco,
     formatarData,
