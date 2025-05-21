@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { ArrowLeft, Clock, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,10 +6,9 @@ import { PedidoCard } from "@/components/pedidos/PedidoCard";
 import { EmptyPedidos } from "@/components/pedidos/EmptyPedidos";
 import { RetiradaSheet } from "@/components/pedidos/RetiradaSheet";
 import { MeusCodigosTab } from "@/components/pedidos/MeusCodigosTab";
-import { BarCardapioView } from "@/components/pedidos/BarCardapioView";
+import { PedidosRetiradaView } from "@/components/pedidos/PedidosRetiradaView";
 import { usePedidos } from "@/hooks/usePedidos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
 
 const MeusPedidos = () => {
   const { 
@@ -57,30 +57,11 @@ const MeusPedidos = () => {
         <Tabs defaultValue="retirada" className="w-full mb-6">
           <TabsList className="flex flex-wrap w-full mb-4 overflow-x-auto">
             <TabsTrigger className="flex-1 min-w-[100px]" value="retirada">Retirar</TabsTrigger>
-            {/* <TabsTrigger className="flex-1 min-w-[100px]" value="pedidos">Pedidos</TabsTrigger> */}
             <TabsTrigger className="flex-1 min-w-[100px]" value="codigos">Códigos</TabsTrigger>
           </TabsList>
           
           <TabsContent value="retirada">
-            <BarCardapioView onGerarCodigo={gerarCodigoParaBar} />
-          </TabsContent>
-          
-          <TabsContent value="pedidos">
-            {pedidos.length === 0 ? (
-              <EmptyPedidos />
-            ) : (
-              <div className="space-y-6">
-                {pedidos.map((pedido) => (
-                  <PedidoCard
-                    key={pedido.id}
-                    pedido={pedido}
-                    iniciarRetirada={iniciarRetirada}
-                    formatarPreco={formatarPreco}
-                    formatarData={formatarData}
-                  />
-                ))}
-              </div>
-            )}
+            <PedidosRetiradaView onGerarCodigo={gerarCodigoParaBar} />
           </TabsContent>
           
           <TabsContent value="codigos">
