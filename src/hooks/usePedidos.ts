@@ -206,7 +206,7 @@ itensPorNome[item.nome_produto].itens.push(item);
     return codigo;
   };
   
-  // Nova função para gerar código a partir da seleção de bar e itens
+  // Modified function to update quantidade_restante when generating a code
   const gerarCodigoParaBar = async (barId: string, itensSelecionados: Record<string, number>) => {
     if (Object.keys(itensSelecionados).length === 0) return;
     
@@ -230,14 +230,59 @@ itensPorNome[item.nome_produto].itens.push(item);
         return;
       }
       
-      // Usar o primeiro pedido como referência
-      const pedidoId = pedidosData[0].id;
+      // Obter todos os pedidos IDs para este bar do usuário
+      const pedidosIds = pedidosData.map(p => p.id);
+      
+      // Buscar todos os itens disponíveis para estes pedidos
+      const { data: itensDisponiveis, error: itensError } = await supabaseExtended
+        .from("pedido_itens")
+        .select("*")
+        .in("pedido_id", pedidosIds)
+        .gt("quantidade_restante", 0);
+      
+      if (itensError) throw itensError;
+      
+      if (!itensDisponiveis || itensDisponiveis.length === 0) {
+        toast({
+          title: "Erro ao gerar código",
+          description: "Não há itens disponíveis para retirada",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Agrupar itens por nome de produto
+      const itensPorNome: Record<string, PedidoItem[]> = {};
+      itensDisponiveis.forEach(item => {
+        if (!itensPorNome[item.nome_produto]) {
+          itensPorNome[item.nome_produto] = [];
+        }
+        itensPorNome[item.nome_produto].push(item);
+      });
+      
+      // Verificar se temos quantidade suficiente para cada item selecionado
+      for (const [nomeProduto, quantidadeSolicitada] of Object.entries(itensSelecionados)) {
+        const itensDisponivelProduto = itensPorNome[nomeProduto] || [];
+        const quantidadeDisponivel = itensDisponivelProduto.reduce(
+          (total, item) => total + item.quantidade_restante, 
+          0
+        );
+        
+        if (quantidadeSolicitada > quantidadeDisponivel) {
+          toast({
+            title: "Quantidade insuficiente",
+            description: `Apenas ${quantidadeDisponivel} unidades de ${nomeProduto} disponíveis para retirada`,
+            variant: "destructive"
+          });
+          return;
+        }
+      }
       
       // Verificar se já existe um código não utilizado para invalidá-lo
       const { data: existingCodes, error: codesError } = await supabaseExtended
         .from("codigos_retirada")
         .select("id")
-        .eq("pedido_id", pedidoId)
+        .in("pedido_id", pedidosIds)
         .eq("usado", false);
       
       if (codesError) throw codesError;
@@ -254,6 +299,38 @@ itensPorNome[item.nome_produto].itens.push(item);
       
       // Gerar código de retirada
       const codigo = gerarCodigoRetirada();
+      
+      // Usar o primeiro pedido como referência para o código
+      const pedidoId = pedidosIds[0];
+      
+      // ATUALIZAÇÃO: Reduzir as quantidades disponíveis nos itens dos pedidos
+      // Para cada produto selecionado, distribuir a quantidade entre os itens disponíveis
+      const updatedItens: Record<string, PedidoItem[]> = { ...itensPorNome };
+      
+      for (const [nomeProduto, quantidadeSolicitada] of Object.entries(itensSelecionados)) {
+        let quantidadeRestante = quantidadeSolicitada;
+        const itensDoProduto = updatedItens[nomeProduto] || [];
+        
+        for (const item of itensDoProduto.sort((a, b) => a.id.localeCompare(b.id))) {
+          if (quantidadeRestante <= 0) break;
+          
+          // Calcular quanto retirar deste item específico
+          const quantidadeRetirada = Math.min(item.quantidade_restante, quantidadeRestante);
+          const novaQuantidade = item.quantidade_restante - quantidadeRetirada;
+          
+          // Atualizar no banco de dados
+          await supabaseExtended
+            .from("pedido_itens")
+            .update({ quantidade_restante: novaQuantidade })
+            .eq("id", item.id);
+          
+          // Atualizar na cópia local
+          item.quantidade_restante = novaQuantidade;
+          
+          // Reduzir a quantidade restante a ser distribuída
+          quantidadeRestante -= quantidadeRetirada;
+        }
+      }
       
       // Salvar o código de retirada no banco de dados
       const { error: codigoError } = await supabaseExtended
@@ -305,6 +382,26 @@ itensPorNome[item.nome_produto].itens.push(item);
       
       // Atualizar os itens agregados
       agregarItemDeTodosPedidos();
+      
+      // Atualizar a lista de pedidos para refletir as mudanças nas quantidades
+      setPedidos(prevPedidos => {
+        return prevPedidos.map(pedido => {
+          if (pedidosIds.includes(pedido.id)) {
+            // Atualizar os itens deste pedido
+            const updatedPedidoItens = pedido.itens.map(item => {
+              const updatedItensForProduto = updatedItens[item.nome_produto] || [];
+              const updatedItem = updatedItensForProduto.find(i => i.id === item.id);
+              if (updatedItem) {
+                return { ...item, quantidade_restante: updatedItem.quantidade_restante };
+              }
+              return item;
+            });
+            
+            return { ...pedido, itens: updatedPedidoItens };
+          }
+          return pedido;
+        });
+      });
       
       toast({
         title: "Código de retirada gerado",
