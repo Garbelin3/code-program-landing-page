@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,15 +5,31 @@ import { supabaseExtended } from '@/integrations/supabase/customClient';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Check, Clock } from 'lucide-react';
 import QRCode from 'qrcode.react';
-import { Pedido } from '@/types/pedidos';
+import { Pedido, Bar } from '@/types/pedidos';
 import { useToast } from '@/hooks/use-toast';
 import { formatarPreco } from '@/components/pedidos/verificar-retirada/utils';
+
+interface SimplePedido {
+  id: string;
+  created_at: string;
+  valor_total: number;
+  status?: string;
+  data_pagamento?: string;
+  stripe_session_id?: string;
+  bar: Bar;
+  itens: Array<{
+    id: string;
+    nome_produto: string;
+    quantidade: number;
+    preco_unitario: number;
+  }>;
+}
 
 const PedidoConfirmado = () => {
   const { pedidoId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [pedido, setPedido] = useState<Pedido | null>(null);
+  const [pedido, setPedido] = useState<SimplePedido | null>(null);
   const [loading, setLoading] = useState(true);
   const [verificandoPagamento, setVerificandoPagamento] = useState(true);
   const [statusPagamento, setStatusPagamento] = useState<string | null>(null);
@@ -139,7 +154,7 @@ const PedidoConfirmado = () => {
         }
 
         // Format the pedido data with its items
-        const fullPedido: Pedido = {
+        const fullPedido: SimplePedido = {
           ...pedidoData,
           itens: itensData || [],
           bar: {
@@ -225,8 +240,8 @@ const PedidoConfirmado = () => {
     );
   }
 
-  const barName = pedido.bar ? pedido.bar.name : "Bar";
-  const barAddress = pedido.bar ? pedido.bar.address : "Endereço do bar";
+  const barName = pedido?.bar ? pedido.bar.name : "Bar";
+  const barAddress = pedido?.bar ? pedido.bar.address : "Endereço do bar";
 
   return (
     <div className="container mx-auto p-4">

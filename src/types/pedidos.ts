@@ -30,3 +30,17 @@ export interface ItemAgregado {
   itens: PedidoItem[];
   total_disponivel: number;
 }
+
+export interface CodigoRetiradaItem {
+  nome_produto: string;
+  quantidade: number;
+}
+
+export interface PedidoBasic {
+  id: string;
+  created_at: string;
+  valor_total: number;
+  status: string;
+  user_id: string;
+  bar: Bar;
+}

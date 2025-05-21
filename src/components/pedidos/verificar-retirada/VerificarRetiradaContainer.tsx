@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,7 +21,8 @@ export const VerificarRetiradaContainer = () => {
     buscarCodigo,
     confirmarEntrega,
     resetForm,
-    setCodigoInput
+    setCodigoInput,
+    formatarPreco
   } = useCodigoRetirada();
 
   // Processamento dos itens no container para evitar problemas de estado

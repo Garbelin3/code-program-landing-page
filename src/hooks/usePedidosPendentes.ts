@@ -72,9 +72,9 @@ export const usePedidosPendentes = () => {
               valor_total: pedido.valor_total,
               status: pedido.status,
               bar: {
-                id: pedido.bar?.id || "",
-                name: pedido.bar?.name || "",
-                address: pedido.bar?.address || ""
+                id: pedido.bar ? pedido.bar.id : "",
+                name: pedido.bar ? pedido.bar.name : "",
+                address: pedido.bar ? pedido.bar.address : ""
               },
               itens: itensData || []
             };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
@@ -68,9 +69,9 @@ export const usePedidos = () => {
               valor_total: pedido.valor_total,
               status: pedido.status,
               bar: {
-                id: pedido.bar?.id || "",
-                name: pedido.bar?.name || "",
-                address: pedido.bar?.address || ""
+                id: pedido.bar ? pedido.bar.id : "",
+                name: pedido.bar ? pedido.bar.name : "",
+                address: pedido.bar ? pedido.bar.address : ""
               },
               itens: itensData || []
             };

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatarPreco } from "./utils";
+import { PedidoBasic } from "@/types/pedidos";
 
 interface Item {
   id: string;
@@ -20,40 +21,47 @@ interface ItemRetirada {
 }
 
 interface InfoPedido {
+  id: string;
+  created_at: string;
   valor_total: number;
-  bar_id: string;
-  bar_name: string;
-  bar_address: string;
+  status: string;
+  user_id: string;
+  bar: {
+    id: string;
+    name: string;
+    address: string;
+  };
   itens: Item[];
 }
 
 export const useCodigoRetirada = () => {
   const { toast } = useToast();
-  const [codigo, setCodigo] = useState("");
+  const [codigoInput, setCodigoInput] = useState("");
+  const [loading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [pedido, setPedido] = useState<InfoPedido | null>(null);
   const [itensRetirada, setItensRetirada] = useState<ItemRetirada[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [success, setIsSuccess] = useState(false);
   const [pedidoId, setPedidoId] = useState<string | null>(null);
   const [barId, setBarId] = useState<string | null>(null);
   const [codigoId, setCodigoId] = useState<string | null>(null);
+  const [codigoRetirada, setCodigoRetirada] = useState<any | null>(null);
 
-  const handleCodigo = async (input: string) => {
-    setCodigo(input);
+  const handleCodigoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCodigoInput(e.target.value);
+    setError(null);
   };
 
-  const verificarCodigo = async () => {
+  const buscarCodigo = async (automatico = false, codigoExplicito?: string) => {
     try {
+      const codigo = codigoExplicito || codigoInput;
       if (!codigo || codigo.length < 6) {
-        toast({
-          title: "Código inválido",
-          description: "Por favor, insira um código de 6 dígitos",
-          variant: "destructive",
-        });
+        setError("Por favor, insira um código de 6 dígitos");
         return false;
       }
 
       setIsLoading(true);
+      setError(null);
 
       // Buscar o código na tabela de codigos_retirada
       const { data: codigoData, error: codigoError } = await supabaseExtended
@@ -69,14 +77,11 @@ export const useCodigoRetirada = () => {
       }
 
       if (!codigoData) {
-        toast({
-          title: "Código inválido",
-          description: "Este código não existe ou já foi utilizado",
-          variant: "destructive",
-        });
+        setError("Este código não existe ou já foi utilizado");
         return false;
       }
 
+      setCodigoRetirada(codigoData);
       setCodigoId(codigoData.id);
       setPedidoId(codigoData.pedido_id);
 
@@ -85,6 +90,9 @@ export const useCodigoRetirada = () => {
         .from("pedidos")
         .select(`
           id,
+          created_at,
+          status,
+          user_id,
           valor_total,
           bar_id,
           bar:bar_id (id, name, address)
@@ -124,11 +132,17 @@ export const useCodigoRetirada = () => {
       setItensRetirada(itensParaRetirar);
 
       setPedido({
+        id: pedidoData.id,
+        created_at: pedidoData.created_at,
+        status: pedidoData.status,
+        user_id: pedidoData.user_id,
         valor_total: pedidoData.valor_total,
-        bar_id: pedidoData.bar_id,
-        bar_name: pedidoData.bar?.name || "",
-        bar_address: pedidoData.bar?.address || "",
-        itens: itensData.map((item) => ({
+        bar: {
+          id: pedidoData.bar.id,
+          name: pedidoData.bar.name,
+          address: pedidoData.bar.address
+        },
+        itens: itensData.map((item: any) => ({
           ...item,
           quantidade_selecionada:
             itensSelecionados[item.nome_produto] || 0,
@@ -136,21 +150,16 @@ export const useCodigoRetirada = () => {
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao verificar código:", error);
-      toast({
-        title: "Erro ao verificar código",
-        description:
-          "Ocorreu um erro ao verificar o código. Por favor, tente novamente.",
-        variant: "destructive",
-      });
+      setError("Ocorreu um erro ao verificar o código. Por favor, tente novamente.");
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const confirmarRetirada = async () => {
+  const confirmarEntrega = async () => {
     try {
       if (!codigoId || !pedidoId) {
         throw new Error("Código ou pedido não identificado");
@@ -200,39 +209,38 @@ export const useCodigoRetirada = () => {
       }
 
       setIsSuccess(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao confirmar retirada:", error);
-      toast({
-        title: "Erro ao confirmar retirada",
-        description:
-          "Ocorreu um erro ao confirmar a retirada. Por favor, tente novamente.",
-        variant: "destructive",
-      });
+      setError("Ocorreu um erro ao confirmar a retirada. Por favor, tente novamente.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const resetarCodigo = () => {
-    setCodigo("");
+  const resetForm = () => {
+    setCodigoInput("");
     setPedido(null);
     setItensRetirada([]);
     setIsSuccess(false);
     setPedidoId(null);
     setBarId(null);
     setCodigoId(null);
+    setCodigoRetirada(null);
+    setError(null);
   };
 
   return {
-    codigo,
-    handleCodigo,
-    verificarCodigo,
-    confirmarRetirada,
-    resetarCodigo,
+    codigoInput,
+    loading,
+    codigoRetirada,
     pedido,
-    itensRetirada,
-    isLoading,
-    isSuccess,
+    error,
+    success,
+    handleCodigoChange,
+    buscarCodigo,
+    confirmarEntrega,
+    resetForm,
+    setCodigoInput,
     formatarPreco,
   };
 };
