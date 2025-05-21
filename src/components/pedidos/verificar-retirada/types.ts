@@ -12,7 +12,6 @@ export interface CodigoRetirada {
   usado: boolean;
   created_at: string;
   invalidado?: boolean;
-  data_geracao?: string;
 }
 
 export interface BarInfo {
