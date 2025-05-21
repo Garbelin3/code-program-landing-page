@@ -6,7 +6,7 @@ import { PedidoCard } from "@/components/pedidos/PedidoCard";
 import { EmptyPedidos } from "@/components/pedidos/EmptyPedidos";
 import { RetiradaSheet } from "@/components/pedidos/RetiradaSheet";
 import { MeusCodigosTab } from "@/components/pedidos/MeusCodigosTab";
-import { PedidosRetiradaView } from "@/components/pedidos/PedidosRetiradaView";
+import { BarCardapioView } from "@/components/pedidos/BarCardapioView";
 import { usePedidos } from "@/hooks/usePedidos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -61,7 +61,7 @@ const MeusPedidos = () => {
           </TabsList>
           
           <TabsContent value="retirada">
-            <PedidosRetiradaView onGerarCodigo={gerarCodigoParaBar} />
+            <BarCardapioView onGerarCodigo={gerarCodigoParaBar} />
           </TabsContent>
           
           <TabsContent value="codigos">
