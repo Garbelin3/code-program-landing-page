@@ -18,11 +18,10 @@ export const EntregaConfirmada = ({ onReset }: EntregaConfirmadaProps) => {
         <AlertDescription>
           Os itens foram entregues com sucesso.
         </AlertDescription>
+        <Button onClick={onReset} className="w-full">
+        Retirar outro pedido
+        </Button>
       </Alert>
-      
-      <Button variant="outline" className="w-full" onClick={onReset}>
-        Verificar outro código
-      </Button>
     </div>
   );
 };

@@ -1,7 +1,8 @@
-
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
+import React from "react";
 
 interface CodigoFormProps {
   codigoInput: string;
@@ -9,36 +10,55 @@ interface CodigoFormProps {
   onSubmit: () => void;
   error: string | null;
   loading: boolean;
+  disableValidation?: boolean;
 }
 
-export const CodigoForm = ({ 
-  codigoInput, 
-  onChange, 
-  onSubmit, 
-  error, 
-  loading 
+export const CodigoForm = ({
+  codigoInput,
+  onChange,
+  onSubmit,
+  error,
+  loading,
+  disableValidation = false
 }: CodigoFormProps) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Formulário submetido, código:", codigoInput);
+    onSubmit();
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
         <Input
+          type="text"
           placeholder="Digite o código de 6 dígitos"
           value={codigoInput}
           onChange={onChange}
-          className="flex-1"
           maxLength={6}
+          className="text-center text-lg tracking-widest"
+          disabled={loading}
+          autoFocus
         />
-        <Button onClick={onSubmit} disabled={loading}>
-          Verificar
-        </Button>
+        
+        {error && (
+          <p className="text-sm text-red-500">{error}</p>
+        )}
       </div>
       
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>Erro</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-    </div>
+      <Button 
+        type="submit" 
+        className="w-full"
+        disabled={loading || (!disableValidation && (!codigoInput || codigoInput.length !== 6))}
+        onClick={(e) => {
+          e.preventDefault();
+          console.log("Botão Verificar clicado, código:", codigoInput);
+          onSubmit();
+        }}
+      >
+        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+        Verificar
+      </Button>
+    </form>
   );
 };
