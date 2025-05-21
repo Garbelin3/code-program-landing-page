@@ -1,6 +1,7 @@
 
 import { useState } from "react";
-import { supabaseExtended } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
 import { CodigoRetirada, ItemRetirada, BarInfo } from "./types";
 
@@ -13,6 +14,7 @@ export const useCodigoRetirada = () => {
   const [barInfo, setBarInfo] = useState<BarInfo | null>(null);
   const [pedidoId, setPedidoId] = useState<string | null>(null);
   const [confirmado, setConfirmado] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
   const resetarEstado = () => {
     setCodigoInput("");
@@ -21,6 +23,7 @@ export const useCodigoRetirada = () => {
     setBarInfo(null);
     setPedidoId(null);
     setConfirmado(false);
+    setErro(null);
   };
 
   const handleCodigoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,10 +37,12 @@ export const useCodigoRetirada = () => {
         description: "Por favor, insira um código de retirada.",
         variant: "destructive"
       });
+      setErro("Por favor, insira um código de retirada.");
       return;
     }
     
     setLoading(true);
+    setErro(null);
     
     try {
       // Verificar se o código existe e não foi usado
@@ -52,6 +57,7 @@ export const useCodigoRetirada = () => {
       if (codigoError) throw codigoError;
       
       if (!codigoData) {
+        setErro("Este código não existe ou já foi utilizado.");
         toast({
           title: "Código inválido",
           description: "Este código não existe ou já foi utilizado.",
@@ -103,6 +109,7 @@ export const useCodigoRetirada = () => {
       setItensRetirada(itensList);
       
     } catch (error: any) {
+      setErro(error.message);
       toast({
         title: "Erro ao validar código",
         description: error.message,
@@ -136,6 +143,7 @@ export const useCodigoRetirada = () => {
         description: "Os itens foram entregues com sucesso!",
       });
     } catch (error: any) {
+      setErro(error.message);
       toast({
         title: "Erro ao confirmar retirada",
         description: error.message,
@@ -155,10 +163,23 @@ export const useCodigoRetirada = () => {
     itensRetirada,
     barInfo,
     confirmado,
-    handleCodigoChange,
+    erro,
+    pedido: barInfo ? { 
+      id: pedidoId || '',
+      created_at: '',
+      valor_total: 0,
+      status: '',
+      user_id: '',
+      bar: barInfo
+    } : null,
+    handleCodigo: handleCodigoChange,
+    setCodigoInput,
     validarCodigo,
+    verificarCodigo: validarCodigo,
     confirmarRetirada,
+    resetarCodigo: resetarEstado,
     setScannerActive,
-    resetarEstado
+    resetarEstado,
+    formatarPreco: (valor: number) => `R$ ${valor.toFixed(2).replace('.', ',')}`
   };
 };

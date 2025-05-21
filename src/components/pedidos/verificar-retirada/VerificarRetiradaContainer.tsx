@@ -11,23 +11,23 @@ import { toast } from "@/components/ui/use-toast";
 
 export const VerificarRetiradaContainer = () => {
   const {
-    codigo,
+    codigoInput,
     loading,
+    confirmado,
+    erro,
     pedido,
-    error,
-    success,
-    codigoRetirada,
+    codigoValidado,
+    itensRetirada,
     handleCodigo,
-    verificarCodigo,
+    validarCodigo,
     confirmarRetirada,
     resetarCodigo,
-    setCodigoInput,
-    formatarPreco
+    setCodigoInput
   } = useCodigoRetirada();
 
   // Processamento dos itens no container para evitar problemas de estado
-  const itensRetirados = codigoRetirada?.itens 
-    ? Object.entries(codigoRetirada.itens).map(([nome, quantidade]) => ({
+  const itensRetirados = codigoValidado?.itens 
+    ? Object.entries(codigoValidado.itens).map(([nome, quantidade]) => ({
         nome_produto: nome,
         quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
       })).filter(item => item.quantidade > 0)
@@ -66,11 +66,11 @@ export const VerificarRetiradaContainer = () => {
 
   // Função para verificar código com recarregamento automático
   const verificarComRecarregamento = useCallback(() => {
-    console.log("Verificando código com recarregamento:", codigo);
+    console.log("Verificando código com recarregamento:", codigoInput);
     // Salvar o código no localStorage e recarregar a página
-    if (codigo && codigo.trim() !== "") {
-      localStorage.setItem('lastCode', codigo.trim());
-      console.log("Código salvo no localStorage:", codigo.trim());
+    if (codigoInput && codigoInput.trim() !== "") {
+      localStorage.setItem('lastCode', codigoInput.trim());
+      console.log("Código salvo no localStorage:", codigoInput.trim());
       window.location.reload();
     } else {
       toast({
@@ -79,7 +79,7 @@ export const VerificarRetiradaContainer = () => {
         variant: "destructive"
       });
     }
-  }, [codigo]);
+  }, [codigoInput]);
 
   // Verificar código salvo no localStorage e executar busca automaticamente
   useEffect(() => {
@@ -106,9 +106,8 @@ export const VerificarRetiradaContainer = () => {
         console.log("Iniciando busca automática com código explícito:", codigoLimpo);
         
         try {
-          // Usar o parâmetro codigoExplicito para passar o código diretamente
-          // Isso evita problemas de sincronização de estado
-          verificarCodigo(true, codigoLimpo);
+          // Passar o código diretamente para evitar problemas de sincronização
+          validarCodigo(codigoLimpo);
         } catch (error) {
           console.error("Erro ao buscar código:", error);
           toast({
@@ -124,7 +123,7 @@ export const VerificarRetiradaContainer = () => {
         }
       }, 800);
     }
-  }, [verificarCodigo, setCodigoInput]);
+  }, [validarCodigo, setCodigoInput]);
   
   return (
     <Card className="w-full max-w-md mx-auto" key={resetKey}>
@@ -143,7 +142,7 @@ export const VerificarRetiradaContainer = () => {
           </div>
         )}
         
-        {!autoVerificando && !codigoRetirada ? (
+        {!autoVerificando && !codigoValidado ? (
           <div className="space-y-4">
             <Tabs 
               defaultValue="manual" 
@@ -158,10 +157,10 @@ export const VerificarRetiradaContainer = () => {
               
               <TabsContent value="manual" className="space-y-4">
                 <CodigoForm
-                  codigoInput={codigo}
+                  codigoInput={codigoInput}
                   onChange={handleCodigo}
                   onSubmit={verificarComRecarregamento}
-                  error={error}
+                  error={erro}
                   loading={loading}
                   disableValidation={false}
                 />
@@ -172,13 +171,13 @@ export const VerificarRetiradaContainer = () => {
               </TabsContent>
             </Tabs>
           </div>
-        ) : success ? (
+        ) : confirmado ? (
           <EntregaConfirmada onReset={handleReset} />
-        ) : codigoRetirada ? (
+        ) : codigoValidado ? (
           <DetalhesRetirada
             pedido={pedido}
-            itensRetirados={itensRetirados}
-            codigoRetirada={codigoRetirada}
+            itensRetirados={itensRetirada}
+            codigoRetirada={codigoValidado}
             onConfirmar={confirmarRetirada}
             onReset={handleReset}
             loading={loading}
@@ -186,7 +185,7 @@ export const VerificarRetiradaContainer = () => {
         ) : null}
       </CardContent>
       
-      {codigoRetirada && !success && (
+      {codigoValidado && !confirmado && (
         <CardFooter>
           {/* Removed button as it's now part of DetalhesRetirada component */}
         </CardFooter>
