@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,21 +12,20 @@ export const VerificarRetiradaContainer = () => {
   const {
     codigoInput,
     loading,
-    confirmado,
-    erro,
+    codigoRetirada,
     pedido,
-    codigoValidado,
-    itensRetirada,
-    handleCodigo,
-    validarCodigo,
-    confirmarRetirada,
-    resetarCodigo,
+    error,
+    success,
+    handleCodigoChange,
+    buscarCodigo,
+    confirmarEntrega,
+    resetForm,
     setCodigoInput
   } = useCodigoRetirada();
 
   // Processamento dos itens no container para evitar problemas de estado
-  const itensRetirados = codigoValidado?.itens 
-    ? Object.entries(codigoValidado.itens).map(([nome, quantidade]) => ({
+  const itensRetirados = codigoRetirada?.itens 
+    ? Object.entries(codigoRetirada.itens).map(([nome, quantidade]) => ({
         nome_produto: nome,
         quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
       })).filter(item => item.quantidade > 0)
@@ -59,10 +57,10 @@ export const VerificarRetiradaContainer = () => {
 
   // Função de reset aprimorada
   const handleReset = useCallback(() => {
-    resetarCodigo();
+    resetForm();
     // Recarregar a página ao resetar
     window.location.reload();
-  }, [resetarCodigo]);
+  }, [resetForm]);
 
   // Função para verificar código com recarregamento automático
   const verificarComRecarregamento = useCallback(() => {
@@ -106,8 +104,9 @@ export const VerificarRetiradaContainer = () => {
         console.log("Iniciando busca automática com código explícito:", codigoLimpo);
         
         try {
-          // Passar o código diretamente para evitar problemas de sincronização
-          validarCodigo(codigoLimpo);
+          // Usar o parâmetro codigoExplicito para passar o código diretamente
+          // Isso evita problemas de sincronização de estado
+          buscarCodigo(true, codigoLimpo);
         } catch (error) {
           console.error("Erro ao buscar código:", error);
           toast({
@@ -123,7 +122,7 @@ export const VerificarRetiradaContainer = () => {
         }
       }, 800);
     }
-  }, [validarCodigo, setCodigoInput]);
+  }, [buscarCodigo, setCodigoInput]);
   
   return (
     <Card className="w-full max-w-md mx-auto" key={resetKey}>
@@ -142,7 +141,7 @@ export const VerificarRetiradaContainer = () => {
           </div>
         )}
         
-        {!autoVerificando && !codigoValidado ? (
+        {!autoVerificando && !codigoRetirada ? (
           <div className="space-y-4">
             <Tabs 
               defaultValue="manual" 
@@ -158,9 +157,9 @@ export const VerificarRetiradaContainer = () => {
               <TabsContent value="manual" className="space-y-4">
                 <CodigoForm
                   codigoInput={codigoInput}
-                  onChange={handleCodigo}
+                  onChange={handleCodigoChange}
                   onSubmit={verificarComRecarregamento}
-                  error={erro}
+                  error={error}
                   loading={loading}
                   disableValidation={false}
                 />
@@ -171,21 +170,21 @@ export const VerificarRetiradaContainer = () => {
               </TabsContent>
             </Tabs>
           </div>
-        ) : confirmado ? (
+        ) : success ? (
           <EntregaConfirmada onReset={handleReset} />
-        ) : codigoValidado ? (
+        ) : codigoRetirada ? (
           <DetalhesRetirada
             pedido={pedido}
-            itensRetirados={itensRetirada}
-            codigoRetirada={codigoValidado}
-            onConfirmar={confirmarRetirada}
+            itensRetirados={itensRetirados}
+            codigoRetirada={codigoRetirada}
+            onConfirmar={confirmarEntrega}
             onReset={handleReset}
             loading={loading}
           />
         ) : null}
       </CardContent>
       
-      {codigoValidado && !confirmado && (
+      {codigoRetirada && !success && (
         <CardFooter>
           {/* Removed button as it's now part of DetalhesRetirada component */}
         </CardFooter>

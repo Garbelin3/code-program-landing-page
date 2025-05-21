@@ -11,11 +11,9 @@ export interface CodigoRetirada {
   itens: Record<string, number>;
   usado: boolean;
   created_at: string;
-  invalidado?: boolean;
 }
 
 export interface BarInfo {
-  id: string;
   name: string;
   address: string;
 }
@@ -26,5 +24,5 @@ export interface PedidoBasic {
   valor_total: number;
   status: string;
   user_id: string;
-  bar: BarInfo;
+  bars: BarInfo;
 }

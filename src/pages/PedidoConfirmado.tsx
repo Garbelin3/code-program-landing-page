@@ -1,111 +1,21 @@
+
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { supabaseExtended } from '@/integrations/supabase/customClient';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Check, Clock } from 'lucide-react';
 import QRCode from 'qrcode.react';
-import { Bar } from '@/types/pedidos';
+import { Pedido } from '@/types/pedidos';
 import { useToast } from '@/hooks/use-toast';
 import { formatarPreco } from '@/components/pedidos/verificar-retirada/utils';
-
-interface PedidoItem {
-  id: string;
-  nome_produto: string;
-  quantidade: number;
-  preco_unitario: number;
-}
-
-interface SimplePedido {
-  id: string;
-  created_at: string;
-  valor_total: number;
-  status?: string;
-  data_pagamento?: string;
-  stripe_session_id?: string;
-  bar: Bar;
-  itens: PedidoItem[];
-}
 
 const PedidoConfirmado = () => {
   const { pedidoId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [pedido, setPedido] = useState<SimplePedido | null>(null);
+  const [pedido, setPedido] = useState<Pedido | null>(null);
   const [loading, setLoading] = useState(true);
-  const [verificandoPagamento, setVerificandoPagamento] = useState(true);
-  const [statusPagamento, setStatusPagamento] = useState<string | null>(null);
   const [codigoRetirada, setCodigoRetirada] = useState<string | null>(null);
-
-  useEffect(() => {
-    const verificarStatusPagamento = async () => {
-      if (!pedidoId) return;
-      
-      try {
-        setVerificandoPagamento(true);
-        
-        // Verificar se o pedido existe e seu status atual
-        const { data: pedidoData, error: pedidoError } = await supabaseExtended
-          .from('pedidos')
-          .select('status')
-          .eq('id', pedidoId)
-          .maybeSingle();
-          
-        if (pedidoError) throw pedidoError;
-        
-        if (!pedidoData) {
-          toast({
-            title: 'Pedido não encontrado',
-            description: 'Não foi possível encontrar o pedido',
-            variant: 'destructive'
-          });
-          navigate('/meus-pedidos');
-          return;
-        }
-        
-        setStatusPagamento(pedidoData.status);
-        
-        // Se o status ainda for "aguardando_pagamento", verificar com o Stripe
-        if (pedidoData.status === 'aguardando_pagamento') {
-          // Verificar status do pagamento com o Stripe
-          const { data: verificationData, error: verificationError } = await supabase.functions.invoke(
-            "verify-payment",
-            {
-              body: {
-                pedidoId: pedidoId
-              }
-            }
-          );
-          
-          if (verificationError) {
-            console.error("Erro ao verificar pagamento:", verificationError);
-          } else if (verificationData?.status === 'paid') {
-            // Atualizar status do pedido para "pago"
-            await supabaseExtended
-              .from('pedidos')
-              .update({ 
-                status: 'pago',
-                data_pagamento: new Date().toISOString()
-              })
-              .eq('id', pedidoId);
-              
-            setStatusPagamento('pago');
-            
-            toast({
-              title: 'Pagamento confirmado',
-              description: 'Seu pagamento foi confirmado com sucesso!'
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao verificar status do pagamento:", error);
-      } finally {
-        setVerificandoPagamento(false);
-      }
-    };
-    
-    verificarStatusPagamento();
-  }, [pedidoId, navigate, toast]);
 
   useEffect(() => {
     const fetchPedido = async () => {
@@ -114,7 +24,7 @@ const PedidoConfirmado = () => {
       try {
         setLoading(true);
         
-        // Buscar pedido com informações do bar
+        // Buscar pedido com informações do bar usando o formato de item único
         const { data: pedidoData, error: pedidoError } = await supabase
           .from('pedidos')
           .select('*, bar:bar_id(*)')
@@ -146,8 +56,6 @@ const PedidoConfirmado = () => {
           .from('codigos_retirada')
           .select('codigo')
           .eq('pedido_id', pedidoId)
-          .eq('usado', false)
-          .eq('invalidado', false)
           .maybeSingle();
 
         // Ignorar erro específico de "nenhuma linha encontrada"
@@ -156,7 +64,7 @@ const PedidoConfirmado = () => {
         }
 
         // Format the pedido data with its items
-        const fullPedido: SimplePedido = {
+        const fullPedido: Pedido = {
           ...pedidoData,
           itens: itensData || [],
           bar: {
@@ -188,40 +96,12 @@ const PedidoConfirmado = () => {
     navigate('/meus-pedidos');
   };
 
-  if (loading || verificandoPagamento) {
+  if (loading) {
     return (
       <div className="container mx-auto p-4 h-screen flex items-center justify-center">
         <div className="text-center">
           <Clock className="mx-auto h-12 w-12 text-gray-400 animate-pulse" />
-          <h2 className="mt-4 text-xl font-semibold">
-            {verificandoPagamento ? "Verificando status do pagamento..." : "Carregando detalhes do pedido..."}
-          </h2>
-        </div>
-      </div>
-    );
-  }
-
-  // Se o pagamento ainda estiver pendente
-  if (statusPagamento === 'aguardando_pagamento') {
-    return (
-      <div className="container mx-auto p-4">
-        <Button variant="ghost" onClick={handleVoltar} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
-        
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8 text-center">
-          <Clock className="mx-auto h-12 w-12 text-yellow-500" />
-          <h1 className="text-2xl font-bold text-yellow-800 mt-4">Pagamento em Processamento</h1>
-          <p className="mt-2 text-yellow-700">
-            Estamos aguardando a confirmação do seu pagamento.
-          </p>
-          <Button 
-            onClick={() => window.location.reload()}
-            className="mt-4"
-          >
-            Verificar novamente
-          </Button>
+          <h2 className="mt-4 text-xl font-semibold">Carregando detalhes do pedido...</h2>
         </div>
       </div>
     );
@@ -242,8 +122,8 @@ const PedidoConfirmado = () => {
     );
   }
 
-  const barName = pedido?.bar ? pedido.bar.name : "Bar";
-  const barAddress = pedido?.bar ? pedido.bar.address : "Endereço do bar";
+  const barName = pedido.bar ? pedido.bar.name : "Bar";
+  const barAddress = pedido.bar ? pedido.bar.address : "Endereço do bar";
 
   return (
     <div className="container mx-auto p-4">
@@ -319,13 +199,6 @@ const PedidoConfirmado = () => {
           ) : (
             <div className="text-gray-600">
               <p>Nenhum código de retirada disponível para este pedido.</p>
-              <p className="mt-2">Para gerar um código, vá para "Meus Pedidos" e selecione os itens que deseja retirar.</p>
-              <Button 
-                onClick={() => navigate('/meus-pedidos')} 
-                className="mt-4"
-              >
-                Ir para Meus Pedidos
-              </Button>
             </div>
           )}
         </div>

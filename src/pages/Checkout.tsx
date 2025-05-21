@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -117,15 +116,14 @@ const Checkout = () => {
     setProcessando(true);
     
     try {
-      // Salvar o pedido no banco de dados com status "aguardando_pagamento"
+      // Salvar o pedido no banco de dados
       const { data: pedido, error: pedidoError } = await supabaseExtended
         .from("pedidos")
         .insert({
           user_id: user.id,
           bar_id: barId,
           valor_total: getCarrinhoValorTotal(),
-          status: 'aguardando_pagamento',
-          data_criacao: new Date().toISOString()
+          status: 'pendente'
         })
         .select()
         .single();
@@ -148,7 +146,7 @@ const Checkout = () => {
         
       if (itensError) throw itensError;
       
-      // Criar nova sessão de pagamento Stripe
+      // Redirecionar para o pagamento Stripe
       const { data: stripeData, error: stripeError } = await supabase.functions.invoke(
         "create-stripe-payment",
         {
@@ -165,7 +163,7 @@ const Checkout = () => {
         throw stripeError;
       }
 
-      if (stripeData && stripeData.url) {
+      if (stripeData.url) {
         // Limpar o carrinho após a criação do pedido
         setCart((prevCart) => {
           const { [barId as string]: _, ...restCart } = prevCart;
