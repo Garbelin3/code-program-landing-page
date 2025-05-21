@@ -1,18 +1,18 @@
 
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
 
 export default function PedidoConfirmado() {
   const { id: pedidoId } = useParams();
   const [pedido, setPedido] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPedido = async () => {
@@ -53,20 +53,25 @@ export default function PedidoConfirmado() {
 
     fetchPedido();
     
-    // Set up interval to check payment status every 5 seconds if not paid
-    const intervalId = setInterval(() => {
+    // Set up interval to check payment status every 3 seconds if not paid
+    const intervalId = setInterval(async () => {
       if (pedido && pedido.status !== "pago" && pedido.stripe_session_id) {
-        verifyStripePayment(pedido.stripe_session_id);
-      } else {
+        const checkPaid = await verifyStripePayment(pedido.stripe_session_id);
+        if (checkPaid) {
+          // Clear interval when payment is confirmed
+          clearInterval(intervalId);
+        }
+      } else if (pedido?.status === "pago") {
+        // Clear interval if already paid
         clearInterval(intervalId);
       }
-    }, 5000);
+    }, 3000);
     
     return () => clearInterval(intervalId);
-  }, [pedidoId, pedido?.status]);
+  }, [pedidoId]);
   
   const verifyStripePayment = async (sessionId: string) => {
-    if (verifying) return;
+    if (verifying) return false;
     
     try {
       setVerifying(true);
@@ -107,11 +112,17 @@ export default function PedidoConfirmado() {
               description: "Seu pagamento foi processado com sucesso!",
               variant: "default",
             });
+            
+            // Return true to indicate payment was successful
+            return true;
           }
         }
       }
+      
+      return false;
     } catch (error: any) {
       console.error("Error verifying payment:", error);
+      return false;
     } finally {
       setVerifying(false);
     }
