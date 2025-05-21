@@ -10,10 +10,12 @@ export interface CodigoRetirada {
   pedido_id: string;
   itens: Record<string, number>;
   usado: boolean;
+  invalidado: boolean;
   created_at: string;
 }
 
 export interface BarInfo {
+  id: string;
   name: string;
   address: string;
 }

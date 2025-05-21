@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
@@ -94,24 +95,6 @@ export const usePedidos = () => {
       fetchPedidos();
     }
   }, [user]);
-
-  const formatarPreco = (preco: number) => {
-    return preco.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    });
-  };
-  
-  const formatarData = (dataString: string) => {
-    const data = new Date(dataString);
-    return data.toLocaleDateString('pt-BR', { 
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
   
   const iniciarRetirada = (pedido: Pedido) => {
     setSelectedPedido(pedido);
@@ -174,23 +157,23 @@ export const usePedidos = () => {
   // Função para agregar item iguais e calcular o total disponível de TODOS os pedidos
   const agregarItemDeTodosPedidos = () => {
     // Primeiro vamos coletar todos os item com quantidade_restante > 0 de TODOS os pedidos
-const itensDisponiveis = pedidos
-  .flatMap(p => p.itens)
-  .filter(item => item.quantidade_restante > 0);
+    const itensDisponiveis = pedidos
+      .flatMap(p => p.itens)
+      .filter(item => item.quantidade_restante > 0);
     
     // Agrupar por nome de produto
     const itensPorNome: Record<string, ItemAgregado> = {};
     
     itensDisponiveis.forEach(item => {
       if (!itensPorNome[item.nome_produto]) {
-  itensPorNome[item.nome_produto] = {
-    nome_produto: item.nome_produto,
-    itens: [], // Alterado para "itens"
-    total_disponivel: 0
-  };
-}
+        itensPorNome[item.nome_produto] = {
+          nome_produto: item.nome_produto,
+          itens: [], // Alterado para "itens"
+          total_disponivel: 0
+        };
+      }
 
-itensPorNome[item.nome_produto].itens.push(item);
+      itensPorNome[item.nome_produto].itens.push(item);
       itensPorNome[item.nome_produto].total_disponivel += item.quantidade_restante;
     });
     
@@ -234,13 +217,13 @@ itensPorNome[item.nome_produto].itens.push(item);
       const pedidosIds = pedidosData.map(p => p.id);
       
       // Buscar todos os itens disponíveis para estes pedidos
-      const { data: itensDisponiveis, error: itensError } = await supabaseExtended
+      const { data: itensDisponiveis, error: itensQueryError } = await supabaseExtended
         .from("pedido_itens")
         .select("*")
         .in("pedido_id", pedidosIds)
         .gt("quantidade_restante", 0);
       
-      if (itensError) throw itensError;
+      if (itensQueryError) throw itensQueryError;
       
       if (!itensDisponiveis || itensDisponiveis.length === 0) {
         toast({
@@ -367,16 +350,27 @@ itensPorNome[item.nome_produto].itens.push(item);
       if (pedidoError) throw pedidoError;
       
       // Buscar itens do pedido
-      const { data: itensData, error: itensError } = await supabaseExtended
+      const { data: itensData, error: itensFetchError } = await supabaseExtended
         .from("pedido_itens")
         .select("*")
         .eq("pedido_id", pedidoId);
       
-      if (itensError) throw itensError;
+      if (itensFetchError) throw itensFetchError;
       
       // Definir o pedido selecionado
+      const barData = pedidoCompleto.bar as unknown as {
+        id: string;
+        name: string;
+        address: string;
+      };
+      
       setSelectedPedido({
         ...pedidoCompleto,
+        bar: {
+          id: barData.id,
+          name: barData.name,
+          address: barData.address
+        },
         itens: itensData || []
       });
       

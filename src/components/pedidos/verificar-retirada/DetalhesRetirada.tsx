@@ -1,3 +1,4 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, RefreshCw } from "lucide-react";
@@ -5,7 +6,7 @@ import { ItemRetirada, PedidoBasic, CodigoRetirada } from "./types";
 import { formatarData, formatarPreco } from "./utils";
 
 interface DetalhesRetiradaProps {
-  pedido: PedidoBasic | null; // Alterado para aceitar null
+  pedido: PedidoBasic | null;
   itensRetirados: ItemRetirada[];
   codigoRetirada: CodigoRetirada;
   onConfirmar: () => void;

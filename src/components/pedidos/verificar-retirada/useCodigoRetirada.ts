@@ -29,7 +29,7 @@ export const useCodigoRetirada = () => {
     name: "",
     address: ""
   });
-  const [codigoRetirada, setCodigoRetirada] = useState<string | null>(null);
+  const [codigoRetirada, setCodigoRetirada] = useState<CodigoRetirada | null>(null);
   
   const handleCodigo = (value: string) => {
     setCodigoInput(value);
@@ -91,6 +91,7 @@ export const useCodigoRetirada = () => {
       }
       
       setCodigoValidado(codigoData);
+      setCodigoRetirada(codigoData);
       
       // Buscar detalhes do pedido
       const { data: pedidoData, error: pedidoError } = await supabaseExtended
@@ -112,8 +113,8 @@ export const useCodigoRetirada = () => {
       
       // Formatar os itens para exibição
       const itensFormattados: ItemRetirada[] = Object.entries(codigoData.itens || {}).map(
-        ([nome, quantidade]) => ({
-          nome,
+        ([nome_produto, quantidade]) => ({
+          nome_produto,
           quantidade: Number(quantidade)
         })
       );
@@ -130,7 +131,6 @@ export const useCodigoRetirada = () => {
       }
       
       // Código validado com sucesso
-      setCodigoRetirada(codigoInput);
     } catch (error: any) {
       console.error("Erro ao verificar código:", error);
       setError("Erro ao verificar código");
@@ -161,6 +161,24 @@ export const useCodigoRetirada = () => {
       setLoading(false);
     }
   };
+
+  // Functions that need to be exported to match what VerificarRetiradaContainer expects
+  const handleCodigoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCodigoInput(e.target.value);
+  };
+
+  const buscarCodigo = (recarregando = false, codigoExplicito?: string) => {
+    const codigoABuscar = codigoExplicito || codigoInput;
+    return verificarCodigo(codigoABuscar);
+  };
+
+  const confirmarEntrega = () => {
+    return confirmarRetirada();
+  };
+
+  const resetForm = () => {
+    return resetarEstado();
+  };
   
   return {
     codigoInput,
@@ -181,6 +199,11 @@ export const useCodigoRetirada = () => {
     setCodigoInput,
     formatarPreco,
     setScannerActive,
-    resetarEstado
+    resetarEstado,
+    // Add these functions to match what VerificarRetiradaContainer expects
+    handleCodigoChange,
+    buscarCodigo,
+    confirmarEntrega,
+    resetForm
   };
 };

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,6 +8,7 @@ import { EntregaConfirmada } from "./EntregaConfirmada";
 import { DetalhesRetirada } from "./DetalhesRetirada";
 import { useCodigoRetirada } from "./useCodigoRetirada";
 import { toast } from "@/components/ui/use-toast";
+import { ItemRetirada } from "./types";
 
 export const VerificarRetiradaContainer = () => {
   const {
@@ -24,9 +26,9 @@ export const VerificarRetiradaContainer = () => {
   } = useCodigoRetirada();
 
   // Processamento dos itens no container para evitar problemas de estado
-  const itensRetirados = codigoRetirada?.itens 
-    ? Object.entries(codigoRetirada.itens).map(([nome, quantidade]) => ({
-        nome_produto: nome,
+  const itensRetirados: ItemRetirada[] = codigoRetirada && typeof codigoRetirada !== 'string' && codigoRetirada.itens 
+    ? Object.entries(codigoRetirada.itens).map(([nome_produto, quantidade]) => ({
+        nome_produto,
         quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
       })).filter(item => item.quantidade > 0)
     : [];
