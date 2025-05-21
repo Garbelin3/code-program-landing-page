@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
@@ -31,10 +31,12 @@ export const useCodigoRetirada = () => {
   });
   const [codigoRetirada, setCodigoRetirada] = useState<CodigoRetirada | null>(null);
   
-  const handleCodigo = (value: string) => {
-    setCodigoInput(value);
+  // Function to handle input changes
+  const handleCodigoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCodigoInput(e.target.value);
   };
-
+  
+  // Reset functions
   const resetarCodigo = () => {
     setCodigo("");
     setCodigoInput("");
@@ -56,6 +58,7 @@ export const useCodigoRetirada = () => {
       name: "",
       address: ""
     });
+    setCodigoRetirada(null);
   };
   
   const resetarEstado = () => {
@@ -63,6 +66,7 @@ export const useCodigoRetirada = () => {
     setSuccess(false);
   };
   
+  // Main verification function - updated to use direct state instead of localstorage
   const verificarCodigo = async (codigoInput: string) => {
     if (!codigoInput) {
       setError("Digite um código de retirada");
@@ -87,6 +91,7 @@ export const useCodigoRetirada = () => {
       
       if (!codigoData) {
         setError("Código de retirada inválido ou já utilizado");
+        setLoading(false);
         return;
       }
       
@@ -162,11 +167,7 @@ export const useCodigoRetirada = () => {
     }
   };
 
-  // Functions that need to be exported to match what VerificarRetiradaContainer expects
-  const handleCodigoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCodigoInput(e.target.value);
-  };
-
+  // Alias functions to match what VerificarRetiradaContainer expects
   const buscarCodigo = (recarregando = false, codigoExplicito?: string) => {
     const codigoABuscar = codigoExplicito || codigoInput;
     return verificarCodigo(codigoABuscar);
@@ -192,7 +193,7 @@ export const useCodigoRetirada = () => {
     pedido,
     error,
     codigoRetirada,
-    handleCodigo,
+    handleCodigo: setCodigoInput,
     verificarCodigo,
     confirmarRetirada,
     resetarCodigo,
@@ -200,7 +201,7 @@ export const useCodigoRetirada = () => {
     formatarPreco,
     setScannerActive,
     resetarEstado,
-    // Add these functions to match what VerificarRetiradaContainer expects
+    // Functions to match what VerificarRetiradaContainer expects
     handleCodigoChange,
     buscarCodigo,
     confirmarEntrega,
