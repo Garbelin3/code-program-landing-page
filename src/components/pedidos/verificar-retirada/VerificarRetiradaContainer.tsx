@@ -36,23 +36,18 @@ export const VerificarRetiradaContainer = () => {
   console.log("itensRetirados processados no container:", itensRetirados);
   
   const [activeTab, setActiveTab] = useState<string>("manual");
+  const [resetKey, setResetKey] = useState(0); // Chave para forçar re-renderização
   const [autoVerificando, setAutoVerificando] = useState(false);
+  const codigoRecuperadoRef = useRef<string | null>(null);
   
   // Função para escanear código com memoização para evitar recriações
   const handleCodeScanned = useCallback((codigo: string) => {
     console.log("Código escaneado:", codigo);
-    
+    // Salvar o código no localStorage e recarregar a página
     if (codigo && codigo.trim() !== "") {
-      const codigoLimpo = codigo.trim();
-      setCodigoInput(codigoLimpo);
-      
-      // Verificar o código diretamente sem recarregar
-      setAutoVerificando(true);
-      
-      setTimeout(() => {
-        buscarCodigo(false, codigoLimpo);
-        setAutoVerificando(false);
-      }, 500);
+      localStorage.setItem('lastCode', codigo.trim());
+      console.log("Código salvo no localStorage:", codigo.trim());
+      window.location.reload();
     } else {
       toast({
         title: "Código inválido",
@@ -60,19 +55,23 @@ export const VerificarRetiradaContainer = () => {
         variant: "destructive"
       });
     }
-  }, [buscarCodigo, setCodigoInput]);
+  }, []);
 
   // Função de reset aprimorada
   const handleReset = useCallback(() => {
     resetForm();
+    // Recarregar a página ao resetar
+    window.location.reload();
   }, [resetForm]);
 
-  // Função para verificar código sem recarregamento
-  const verificarComMelhoria = useCallback(() => {
-    console.log("Verificando código sem recarregamento:", codigoInput);
-    
+  // Função para verificar código com recarregamento automático
+  const verificarComRecarregamento = useCallback(() => {
+    console.log("Verificando código com recarregamento:", codigoInput);
+    // Salvar o código no localStorage e recarregar a página
     if (codigoInput && codigoInput.trim() !== "") {
-      buscarCodigo(false, codigoInput.trim());
+      localStorage.setItem('lastCode', codigoInput.trim());
+      console.log("Código salvo no localStorage:", codigoInput.trim());
+      window.location.reload();
     } else {
       toast({
         title: "Código inválido",
@@ -80,7 +79,7 @@ export const VerificarRetiradaContainer = () => {
         variant: "destructive"
       });
     }
-  }, [codigoInput, buscarCodigo]);
+  }, [codigoInput]);
 
   // Verificar código salvo no localStorage e executar busca automaticamente
   useEffect(() => {
@@ -89,6 +88,9 @@ export const VerificarRetiradaContainer = () => {
     if (lastCode && lastCode.trim() !== "") {
       const codigoLimpo = lastCode.trim();
       console.log("Código recuperado do localStorage:", codigoLimpo);
+      
+      // Salvar o código recuperado na ref para uso posterior
+      codigoRecuperadoRef.current = codigoLimpo;
       
       // Mostrar indicador de carregamento
       setAutoVerificando(true);
@@ -105,6 +107,7 @@ export const VerificarRetiradaContainer = () => {
         
         try {
           // Usar o parâmetro codigoExplicito para passar o código diretamente
+          // Isso evita problemas de sincronização de estado
           buscarCodigo(true, codigoLimpo);
         } catch (error) {
           console.error("Erro ao buscar código:", error);
@@ -124,7 +127,7 @@ export const VerificarRetiradaContainer = () => {
   }, [buscarCodigo, setCodigoInput]);
   
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto" key={resetKey}>
       <CardHeader>
         <CardTitle className="text-xl">Verificar Retirada</CardTitle>
         <CardDescription>
@@ -136,7 +139,7 @@ export const VerificarRetiradaContainer = () => {
         {autoVerificando && (
           <div className="p-4 text-center">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p>Verificando código...</p>
+            <p>Verificando código automaticamente: {codigoRecuperadoRef.current}</p>
           </div>
         )}
         
@@ -157,7 +160,7 @@ export const VerificarRetiradaContainer = () => {
                 <CodigoForm
                   codigoInput={codigoInput}
                   onChange={handleCodigoChange}
-                  onSubmit={verificarComMelhoria}
+                  onSubmit={verificarComRecarregamento}
                   error={error}
                   loading={loading}
                   disableValidation={false}
@@ -185,7 +188,7 @@ export const VerificarRetiradaContainer = () => {
       
       {codigoRetirada && !success && (
         <CardFooter>
-          {/* No content needed here as buttons are in DetalhesRetirada */}
+          {/* Removed button as it's now part of DetalhesRetirada component */}
         </CardFooter>
       )}
     </Card>

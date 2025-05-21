@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
@@ -50,6 +50,11 @@ export const CodigoForm = ({
         type="submit" 
         className="w-full"
         disabled={loading || (!disableValidation && (!codigoInput || codigoInput.length !== 6))}
+        onClick={(e) => {
+          e.preventDefault();
+          console.log("Botão Verificar clicado, código:", codigoInput);
+          onSubmit();
+        }}
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
         Verificar

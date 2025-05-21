@@ -59,6 +59,7 @@ export const DetalhesRetirada = ({
             <Check className="mr-2 h-4 w-4" />
             Confirmar entrega
           </Button>
+          
         </div>
       </div>
     );
@@ -117,15 +118,6 @@ export const DetalhesRetirada = ({
           Confirmar entrega
         </Button>
         
-        <Button 
-          variant="outline" 
-          className="w-full" 
-          onClick={onReset}
-          disabled={loading}
-        >
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Verificar outro código
-        </Button>
       </div>
     </div>
   );
