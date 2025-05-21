@@ -3,3 +3,7 @@ project_id = "meitoqhuhwqhzjywbxyf"
 
 [functions.create-admin]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+

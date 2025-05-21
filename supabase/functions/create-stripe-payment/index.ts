@@ -103,6 +103,7 @@ serve(async (req) => {
       metadata: {
         pedido_id: pedidoId,
         bar_id: barId,
+        user_id: user?.id
       },
     });
 
