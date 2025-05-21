@@ -114,7 +114,7 @@ export const usePedidosPendentes = () => {
         .from("pedidos")
         .select("stripe_session_id")
         .eq("id", pedidoId)
-        .single();
+        .maybeSingle();
       
       if (pedidoError) throw pedidoError;
       
