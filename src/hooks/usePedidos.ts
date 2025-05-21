@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
-import { Pedido, PedidoItem, ItemAgregado } from "@/types/pedidos";
+import { Pedido, PedidoItem, ItemAgregado, Bar } from "@/types/pedidos";
 import { formatarPreco, formatarData } from "@/components/pedidos/verificar-retirada/utils";
 
 export const usePedidos = () => {
@@ -14,7 +14,7 @@ export const usePedidos = () => {
   const [codigoRetirada, setCodigoRetirada] = useState("");
   const [qrVisible, setQrVisible] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [itensAgregados, setItensAgregados] = useState<ItensAgregado[]>([]);
+  const [itensAgregados, setItensAgregados] = useState<ItemAgregado[]>([]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -33,7 +33,7 @@ export const usePedidos = () => {
     const fetchPedidos = async () => {
       setLoading(true);
       try {
-        // Buscar pedidos
+        // Buscar pedidos que estejam pagos (apenas status "pago")
         const { data: pedidosData, error: pedidosError } = await supabaseExtended
           .from("pedidos")
           .select(`
@@ -41,9 +41,11 @@ export const usePedidos = () => {
             created_at, 
             valor_total, 
             bar_id,
-            bar:bar_id (id, name, address)
+            bar:bar_id (id, name, address),
+            status
           `)
           .eq("user_id", user.id)
+          .eq("status", "pago") // Filtrando apenas pedidos pagos
           .order("created_at", { ascending: false });
         
         if (pedidosError) throw pedidosError;
@@ -52,7 +54,7 @@ export const usePedidos = () => {
         
         // Buscar item de cada pedido
         const pedidosComItem = await Promise.all(
-          (pedidosData || []).map(async (pedido) => {
+          (pedidosData || []).map(async (pedido: any) => {
             const { data: itensData, error: itensError } = await supabaseExtended
               .from("pedido_itens")
               .select("*")
@@ -61,16 +63,17 @@ export const usePedidos = () => {
             if (itensError) throw itensError;
             
             return {
-            id: pedido.id,
-            created_at: pedido.created_at,
-            valor_total: pedido.valor_total,
-            bar: {
-              id: pedido.bar?.id || "",
-              name: pedido.bar?.name || "",
-              address: pedido.bar?.address || ""
-            },
-            itens: itensData || [] // Alterado para "itens"
-          };
+              id: pedido.id,
+              created_at: pedido.created_at,
+              valor_total: pedido.valor_total,
+              status: pedido.status,
+              bar: {
+                id: pedido.bar.id,
+                name: pedido.bar.name,
+                address: pedido.bar.address
+              },
+              itens: itensData || []
+            };
           })
         );
         
@@ -114,11 +117,58 @@ export const usePedidos = () => {
     setSelectedPedido(pedido);
     agregarItemDeTodosPedidos();
     
-    // Resetar as seleções 
+    // Verificar se já existe um código de retirada não utilizado para este pedido
+    // Esta função agora sempre verifica e recupera códigos não utilizados
+    verificarCodigoExistente(pedido.id);
+    
+    // Resetar as seleções apenas se não houver código existente
+    // As seleções serão preenchidas na função verificarCodigoExistente se houver código
     const initialSelections: Record<string, number> = {};
     setItensSelecionados(initialSelections);
     
     setRetirarSheetOpen(true);
+  };
+  
+  // Função para verificar se já existe um código de retirada não utilizado
+  const verificarCodigoExistente = async (pedidoId: string) => {
+    try {
+      // Buscar o código de retirada mais recente que não foi usado nem invalidado
+      const { data, error } = await supabaseExtended
+        .from("codigos_retirada")
+        .select("*")
+        .eq("pedido_id", pedidoId)
+        .eq("usado", false)
+        .eq("invalidado", false)
+        .order("created_at", { ascending: false })
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      if (data) {
+        // Existe um código não utilizado, vamos usá-lo
+        setCodigoRetirada(data.codigo);
+        setQrVisible(true);
+        
+        // Preencher os itens selecionados com base no código existente
+        if (data.itens && typeof data.itens === 'object') {
+          setItensSelecionados(data.itens as Record<string, number>);
+        }
+        
+        toast({
+          title: "Código de retirada recuperado",
+          description: "Você já possui um código de retirada ativo para este pedido.",
+          variant: "default"
+        });
+        
+        console.log("Código de retirada recuperado:", data.codigo);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Erro ao verificar código de retirada existente:", error);
+      return false;
+    }
   };
   
   // Função para agregar item iguais e calcular o total disponível de TODOS os pedidos
@@ -156,10 +206,145 @@ itensPorNome[item.nome_produto].itens.push(item);
     return codigo;
   };
   
+  // Nova função para gerar código a partir da seleção de bar e itens
+  const gerarCodigoParaBar = async (barId: string, itensSelecionados: Record<string, number>) => {
+    if (Object.keys(itensSelecionados).length === 0) return;
+    
+    try {
+      // Buscar pedidos do usuário para este bar
+      const { data: pedidosData, error: pedidosError } = await supabaseExtended
+        .from("pedidos")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("bar_id", barId)
+        .eq("status", "pago");
+      
+      if (pedidosError) throw pedidosError;
+      
+      if (!pedidosData || pedidosData.length === 0) {
+        toast({
+          title: "Erro ao gerar código",
+          description: "Não foi possível encontrar pedidos para este bar",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Usar o primeiro pedido como referência
+      const pedidoId = pedidosData[0].id;
+      
+      // Verificar se já existe um código não utilizado para invalidá-lo
+      const { data: existingCodes, error: codesError } = await supabaseExtended
+        .from("codigos_retirada")
+        .select("id")
+        .eq("pedido_id", pedidoId)
+        .eq("usado", false);
+      
+      if (codesError) throw codesError;
+      
+      // Se existir algum código não utilizado, vamos marcá-lo como inválido
+      if (existingCodes && existingCodes.length > 0) {
+        for (const codigo of existingCodes) {
+          await supabaseExtended
+            .from("codigos_retirada")
+            .update({ invalidado: true })
+            .eq("id", codigo.id);
+        }
+      }
+      
+      // Gerar código de retirada
+      const codigo = gerarCodigoRetirada();
+      
+      // Salvar o código de retirada no banco de dados
+      const { error: codigoError } = await supabaseExtended
+        .from("codigos_retirada")
+        .insert({
+          codigo: codigo,
+          pedido_id: pedidoId,
+          itens: itensSelecionados,
+          usado: false,
+          invalidado: false
+        });
+      
+      if (codigoError) throw codigoError;
+      
+      // Mostrar o código gerado
+      setCodigoRetirada(codigo);
+      setQrVisible(true);
+      setRetirarSheetOpen(true);
+      
+      // Buscar o pedido completo para exibir na sheet
+      const { data: pedidoCompleto, error: pedidoError } = await supabaseExtended
+        .from("pedidos")
+        .select(`
+          id, 
+          created_at, 
+          valor_total, 
+          bar_id,
+          bar:bar_id (id, name, address),
+          status
+        `)
+        .eq("id", pedidoId)
+        .single();
+      
+      if (pedidoError) throw pedidoError;
+      
+      // Buscar itens do pedido
+      const { data: itensData, error: itensError } = await supabaseExtended
+        .from("pedido_itens")
+        .select("*")
+        .eq("pedido_id", pedidoId);
+      
+      if (itensError) throw itensError;
+      
+      // Definir o pedido selecionado
+      setSelectedPedido({
+        ...pedidoCompleto,
+        itens: itensData || []
+      });
+      
+      // Atualizar os itens agregados
+      agregarItemDeTodosPedidos();
+      
+      toast({
+        title: "Código de retirada gerado",
+        description: "Seu código de retirada foi gerado com sucesso!",
+        variant: "default"
+      });
+      
+    } catch (error: any) {
+      toast({
+        title: "Erro ao gerar código de retirada",
+        description: error.message,
+        variant: "destructive"
+      });
+      console.error("Error generating withdrawal code:", error);
+    }
+  };
+  
   const confirmarRetirada = async () => {
     if (!selectedPedido || Object.keys(itensSelecionados).length === 0) return;
     
     try {
+      // Verificar se já existe um código não utilizado para invalidá-lo
+      const { data: existingCodes, error: codesError } = await supabaseExtended
+        .from("codigos_retirada")
+        .select("id")
+        .eq("pedido_id", selectedPedido.id)
+        .eq("usado", false);
+      
+      if (codesError) throw codesError;
+      
+      // Se existir algum código não utilizado, vamos marcá-lo como inválido
+      if (existingCodes && existingCodes.length > 0) {
+        for (const codigo of existingCodes) {
+          await supabaseExtended
+            .from("codigos_retirada")
+            .update({ usado: true, invalidado: true })
+            .eq("id", codigo.id);
+        }
+      }
+      
       // Gerar código de retirada
       const codigo = gerarCodigoRetirada();
       
@@ -169,9 +354,9 @@ itensPorNome[item.nome_produto].itens.push(item);
         
         // Encontrar todos os item desse produto
         const itemAgregado = itensAgregados.find(i => i.nome_produto === nomeProduto);
-if (!itemAgregado) continue;
+        if (!itemAgregado) continue;
 
-for (const pedidoItem of itemAgregado.itens.sort((a, b) => a.id.localeCompare(b.id))) {
+        for (const pedidoItem of itemAgregado.itens.sort((a, b) => a.id.localeCompare(b.id))) {
           if (quantidadeRestante <= 0) break;
           
           // Calcular quanto retirar deste item específico
@@ -197,13 +382,15 @@ for (const pedidoItem of itemAgregado.itens.sort((a, b) => a.id.localeCompare(b.
       console.log("Salvando código de retirada:", codigo, "com item:", itensSelecionados);
       
       // Salvar o código de retirada no banco de dados
-    const { error: codigoError } = await supabaseExtended
-      .from("codigos_retirada")
-      .insert({
-        codigo: codigo,
-        pedido_id: selectedPedido.id,
-        itens: itensSelecionados, // Alterado para "itens"
-        usado: false
+      const { error: codigoError } = await supabaseExtended
+        .from("codigos_retirada")
+        .insert({
+          codigo: codigo,
+          pedido_id: selectedPedido.id,
+          itens: itensSelecionados,
+          usado: false,
+          invalidado: false
+          // Removida referência a data_geracao, usando created_at automático do Supabase
         });
       
       if (codigoError) throw codigoError;
@@ -245,12 +432,19 @@ for (const pedidoItem of itemAgregado.itens.sort((a, b) => a.id.localeCompare(b.
   };
 
   const fecharSheet = () => {
+    // Não limpar o código de retirada ao fechar o sheet
+    // para garantir que ele permaneça disponível na próxima vez
     setRetirarSheetOpen(false);
     setQrVisible(false);
-    setCodigoRetirada("");
+    
+    // Manter o código e os itens selecionados em memória
+    // setCodigoRetirada("");
+    
     setSelectedPedido(null);
-    setItemAgregados([]);
-    setItensSelecionados({});
+    setItensAgregados([]);
+    
+    // Não limpar os itens selecionados para manter a seleção
+    // setItensSelecionados({});
   };
 
   return {
@@ -268,6 +462,7 @@ for (const pedidoItem of itemAgregado.itens.sort((a, b) => a.id.localeCompare(b.
     confirmarRetirada,
     fecharSheet,
     setRetirarSheetOpen,
-    setItensSelecionados
+    setItensSelecionados,
+    gerarCodigoParaBar
   };
 };
