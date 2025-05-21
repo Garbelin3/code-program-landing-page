@@ -17,6 +17,7 @@ export interface Pedido {
   id: string;
   created_at: string;
   valor_total: number;
+  status?: string;
   bar: Bar;
   itens: PedidoItem[];
 }

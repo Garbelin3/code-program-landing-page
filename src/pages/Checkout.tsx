@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,14 +117,15 @@ const Checkout = () => {
     setProcessando(true);
     
     try {
-      // Salvar o pedido no banco de dados
+      // Salvar o pedido no banco de dados com status "aguardando_pagamento"
       const { data: pedido, error: pedidoError } = await supabaseExtended
         .from("pedidos")
         .insert({
           user_id: user.id,
           bar_id: barId,
           valor_total: getCarrinhoValorTotal(),
-          status: 'pendente'
+          status: 'aguardando_pagamento',
+          data_criacao: new Date().toISOString()
         })
         .select()
         .single();
