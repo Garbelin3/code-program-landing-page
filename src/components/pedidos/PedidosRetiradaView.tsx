@@ -19,12 +19,16 @@ export const PedidosRetiradaView = ({ onGerarCodigo }: PedidosRetiradaViewProps)
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [itensSelecionados, setItensSelecionados] = useState<Record<string, number>>({});
+  const [debugInfo, setDebugInfo] = useState<string>("");
   
   useEffect(() => {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
+        console.log("User authenticated:", session.user.id);
+      } else {
+        console.log("No authenticated user found");
       }
     };
     
@@ -36,7 +40,10 @@ export const PedidosRetiradaView = ({ onGerarCodigo }: PedidosRetiradaViewProps)
     
     const fetchPedidos = async () => {
       setLoading(true);
+      setDebugInfo("");
       try {
+        console.log("Fetching orders for user:", user.id);
+        
         // Buscar pedidos pagos do usuário
         const { data: pedidosData, error: pedidosError } = await supabaseExtended
           .from("pedidos")
@@ -52,7 +59,25 @@ export const PedidosRetiradaView = ({ onGerarCodigo }: PedidosRetiradaViewProps)
           .eq("status", "pago")
           .order("created_at", { ascending: false });
         
-        if (pedidosError) throw pedidosError;
+        if (pedidosError) {
+          setDebugInfo(`Error fetching orders: ${pedidosError.message}`);
+          throw pedidosError;
+        }
+        
+        console.log("Orders fetched:", pedidosData?.length || 0);
+        setDebugInfo(prev => prev + `\nFound ${pedidosData?.length || 0} paid orders`);
+        
+        if (pedidosData && pedidosData.length > 0) {
+          // Log the IDs of the fetched orders for debugging
+          const orderIds = pedidosData.map(p => p.id);
+          console.log("Order IDs found:", orderIds);
+          
+          // Check if the specific order ID is in the results
+          const targetOrderId = "fcfa66f6-4e52-4478-a0e5-1796b0277b3c";
+          const hasTargetOrder = orderIds.includes(targetOrderId);
+          console.log(`Order ${targetOrderId} found:`, hasTargetOrder);
+          setDebugInfo(prev => prev + `\nTargeted order found: ${hasTargetOrder}`);
+        }
         
         // Buscar item de cada pedido
         const pedidosComItem = await Promise.all(
@@ -62,7 +87,16 @@ export const PedidosRetiradaView = ({ onGerarCodigo }: PedidosRetiradaViewProps)
               .select("*")
               .eq("pedido_id", pedido.id);
             
-            if (itensError) throw itensError;
+            if (itensError) {
+              setDebugInfo(prev => prev + `\nError fetching items for order ${pedido.id}: ${itensError.message}`);
+              throw itensError;
+            }
+            
+            console.log(`Order ${pedido.id} has ${itensData?.length || 0} items`);
+            
+            // Count items that are available for retrieval
+            const availableItems = itensData?.filter(item => item.quantidade_restante > 0) || [];
+            console.log(`Order ${pedido.id} has ${availableItems.length} items available for retrieval`);
             
             return {
               id: pedido.id,
@@ -79,6 +113,13 @@ export const PedidosRetiradaView = ({ onGerarCodigo }: PedidosRetiradaViewProps)
           })
         );
         
+        // Count how many orders have available items for retrieval
+        const ordersWithAvailableItems = pedidosComItem.filter(pedido => 
+          pedido.itens.some(item => item.quantidade_restante > 0)
+        );
+        console.log(`Total orders with available items: ${ordersWithAvailableItems.length}`);
+        setDebugInfo(prev => prev + `\nOrders with available items: ${ordersWithAvailableItems.length}`);
+        
         setPedidos(pedidosComItem);
       } catch (error: any) {
         toast({
@@ -87,6 +128,7 @@ export const PedidosRetiradaView = ({ onGerarCodigo }: PedidosRetiradaViewProps)
           variant: "destructive"
         });
         console.error("Error fetching orders:", error);
+        setDebugInfo(prev => prev + `\nError: ${error.message}`);
       } finally {
         setLoading(false);
       }
@@ -205,6 +247,7 @@ export const PedidosRetiradaView = ({ onGerarCodigo }: PedidosRetiradaViewProps)
     );
   }
   
+  // Add debugging info display on the page when there are no orders
   if (pedidosDisponiveis.length === 0) {
     return (
       <div className="text-center py-12">
@@ -213,6 +256,16 @@ export const PedidosRetiradaView = ({ onGerarCodigo }: PedidosRetiradaViewProps)
         <p className="text-sm text-gray-500 mt-2">
           Você não tem nenhum pedido disponível para retirada no momento.
         </p>
+        
+        {/* Debug info - will be shown only when no orders are displayed */}
+        {debugInfo && (
+          <div className="mt-8 p-4 border border-gray-300 rounded-md bg-gray-50 text-left">
+            <p className="font-semibold mb-2">Informações de depuração:</p>
+            <pre className="whitespace-pre-wrap text-xs text-gray-600">
+              {debugInfo}
+            </pre>
+          </div>
+        )}
       </div>
     );
   }
@@ -340,6 +393,9 @@ export const PedidosRetiradaView = ({ onGerarCodigo }: PedidosRetiradaViewProps)
                     </p>
                     <p className="font-medium text-sm mt-1">
                       Total do pedido: {formatarPreco(pedido.valor_total)}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      ID: {pedido.id}
                     </p>
                   </div>
                   
