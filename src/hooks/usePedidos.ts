@@ -63,17 +63,17 @@ export const usePedidos = () => {
             if (itensError) throw itensError;
             
             return {
-            id: pedido.id,
-            created_at: pedido.created_at,
-            valor_total: pedido.valor_total,
-            status: pedido.status,
-            bar: {
-              id: pedido.bar?.id || "",
-              name: pedido.bar?.name || "",
-              address: pedido.bar?.address || ""
-            },
-            itens: itensData || []
-          };
+              id: pedido.id,
+              created_at: pedido.created_at,
+              valor_total: pedido.valor_total,
+              status: pedido.status,
+              bar: {
+                id: pedido.bar?.id || "",
+                name: pedido.bar?.name || "",
+                address: pedido.bar?.address || ""
+              },
+              itens: itensData || []
+            };
           })
         );
         
@@ -135,6 +135,7 @@ export const usePedidos = () => {
         .select("*")
         .eq("pedido_id", pedidoId)
         .eq("usado", false)
+        .eq("invalidado", false)
         .maybeSingle();
       
       if (error) throw error;

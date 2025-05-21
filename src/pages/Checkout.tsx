@@ -165,7 +165,7 @@ const Checkout = () => {
         throw stripeError;
       }
 
-      if (stripeData.url) {
+      if (stripeData && stripeData.url) {
         // Limpar o carrinho após a criação do pedido
         setCart((prevCart) => {
           const { [barId as string]: _, ...restCart } = prevCart;

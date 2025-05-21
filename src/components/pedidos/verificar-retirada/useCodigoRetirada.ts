@@ -1,215 +1,238 @@
+
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
-import { toast } from "@/hooks/use-toast";
-import { CodigoRetirada, PedidoBasic, ItemRetirada } from "./types";
+import { useToast } from "@/hooks/use-toast";
+import { formatarPreco } from "./utils";
+
+interface Item {
+  id: string;
+  nome_produto: string;
+  quantidade: number;
+  quantidade_restante: number;
+  preco_unitario: number;
+  quantidade_selecionada?: number;
+}
+
+interface ItemRetirada {
+  produto: string;
+  quantidade: number;
+}
+
+interface InfoPedido {
+  valor_total: number;
+  bar_id: string;
+  bar_name: string;
+  bar_address: string;
+  itens: Item[];
+}
 
 export const useCodigoRetirada = () => {
-  const [codigoInput, setCodigoInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [codigoRetirada, setCodigoRetirada] = useState<CodigoRetirada | null>(null);
-  const [pedido, setPedido] = useState<PedidoBasic | null>(null);
-  const [itensRetirados, setItensRetirados] = useState<ItemRetirada[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  
-  const handleCodigoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCodigoInput(e.target.value);
+  const { toast } = useToast();
+  const [codigo, setCodigo] = useState("");
+  const [pedido, setPedido] = useState<InfoPedido | null>(null);
+  const [itensRetirada, setItensRetirada] = useState<ItemRetirada[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [pedidoId, setPedidoId] = useState<string | null>(null);
+  const [barId, setBarId] = useState<string | null>(null);
+  const [codigoId, setCodigoId] = useState<string | null>(null);
+
+  const handleCodigo = async (input: string) => {
+    setCodigo(input);
   };
-  
-  // Versão modificada de buscarCodigo que aceita um parâmetro de código explícito
-  const buscarCodigo = async (skipValidation = false, codigoExplicito?: string) => {
-    // Usar o código explícito se fornecido, caso contrário usar o codigoInput do estado
-    const codigoParaBuscar = codigoExplicito ? codigoExplicito.trim() : codigoInput.trim();
-    console.log("Buscando código (explícito ou do estado):", codigoParaBuscar);
-    
-    // Verificar se o código está vazio
-    if (!codigoParaBuscar) {
-      toast({
-        title: "Código inválido",
-        description: "O código de retirada não pode estar vazio",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Pular a validação de 6 dígitos se skipValidation for true
-    if (!skipValidation && codigoParaBuscar.length !== 6) {
-      toast({
-        title: "Código inválido",
-        description: "O código de retirada deve ter 6 dígitos",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setLoading(true);
-    setError(null);
-    setCodigoRetirada(null);
-    setItensRetirados([]);
-    setSuccess(false);
-    
+
+  const verificarCodigo = async () => {
     try {
-      console.log("Iniciando busca no Supabase para código:", codigoParaBuscar);
-      
-      // Buscar o código na tabela codigos_retirada
-      const { data, error } = await supabaseExtended
+      if (!codigo || codigo.length < 6) {
+        toast({
+          title: "Código inválido",
+          description: "Por favor, insira um código de 6 dígitos",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      setIsLoading(true);
+
+      // Buscar o código na tabela de codigos_retirada
+      const { data: codigoData, error: codigoError } = await supabaseExtended
         .from("codigos_retirada")
         .select("*")
-        .eq("codigo", codigoParaBuscar)
+        .eq("codigo", codigo)
+        .eq("usado", false)
+        .eq("invalidado", false)
         .maybeSingle();
-      
-      console.log("Resposta do Supabase:", { data, error });
-      
-      if (error) {
-        console.error("Erro do Supabase:", error);
-        throw error;
+
+      if (codigoError) {
+        throw codigoError;
       }
-      
-      if (!data) {
-        console.log("Código não encontrado no banco de dados:", codigoParaBuscar);
-        setError("Código de retirada não encontrado.");
-        setLoading(false);
-        return;
+
+      if (!codigoData) {
+        toast({
+          title: "Código inválido",
+          description: "Este código não existe ou já foi utilizado",
+          variant: "destructive",
+        });
+        return false;
       }
-      
-      console.log("Código encontrado com sucesso:", data);
-      
-      if (data.usado) {
-        setError("Este código já foi utilizado para retirada.");
-        setLoading(false);
-        return;
-      }
-      
-      // Guardar os dados do código de retirada
-      setCodigoRetirada(data);
-      
+
+      setCodigoId(codigoData.id);
+      setPedidoId(codigoData.pedido_id);
+
       // Buscar informações do pedido
-      console.log("Buscando informações do pedido ID:", data.pedido_id);
       const { data: pedidoData, error: pedidoError } = await supabaseExtended
         .from("pedidos")
         .select(`
           id,
-          created_at,
           valor_total,
-          status,
-          user_id,
-          bar:bar_id (
-            name,
-            address
-          )
+          bar_id,
+          bar:bar_id (id, name, address)
         `)
-        .eq("id", data.pedido_id)
-        .maybeSingle(); // Usando maybeSingle em vez de single
-      
-      console.log("Resposta do pedido:", { pedidoData, pedidoError });
-      
+        .eq("id", codigoData.pedido_id)
+        .single();
+
       if (pedidoError) {
-        console.error("Erro ao buscar pedido:", pedidoError);
         throw pedidoError;
       }
-      
-      if (!pedidoData) {
-        setError("Pedido não encontrado para este código.");
-        setLoading(false);
-        return;
+
+      setBarId(pedidoData.bar_id);
+
+      // Buscar itens do pedido que estão no código de retirada
+      const { data: itensData, error: itensError } = await supabaseExtended
+        .from("pedido_itens")
+        .select("*")
+        .eq("pedido_id", codigoData.pedido_id);
+
+      if (itensError) {
+        throw itensError;
       }
-      
-      console.log("Dados do pedido:", pedidoData);
-      console.log("Dados do bar:", pedidoData.bar);
-      
-      // Configurar o objeto de pedido com a estrutura correta e acesso seguro às propriedades
+
+      // Filtrar os itens com base no que está definido no código de retirada
+      const itensSelecionados = codigoData.itens;
+      const itensParaRetirar: ItemRetirada[] = [];
+
+      for (const [nomeProduto, quantidade] of Object.entries(
+        itensSelecionados
+      )) {
+        itensParaRetirar.push({
+          produto: nomeProduto,
+          quantidade: quantidade as number,
+        });
+      }
+
+      setItensRetirada(itensParaRetirar);
+
       setPedido({
-        id: pedidoData.id,
-        created_at: pedidoData.created_at,
         valor_total: pedidoData.valor_total,
-        status: pedidoData.status,
-        user_id: pedidoData.user_id,
-        bars: {
-          name: pedidoData.bar?.name || "",
-          address: pedidoData.bar?.address || ""
-        }
+        bar_id: pedidoData.bar_id,
+        bar_name: pedidoData.bar?.name || "",
+        bar_address: pedidoData.bar?.address || "",
+        itens: itensData.map((item) => ({
+          ...item,
+          quantidade_selecionada:
+            itensSelecionados[item.nome_produto] || 0,
+        })),
       });
-      
-      // Processar os itens do código de retirada
-      console.log("Dados de itens brutos:", data.itens);
-      
-      // Converter o objeto de itens para um array mais fácil de usar
-      if (data.itens && typeof data.itens === 'object') {
-        // Garantir que estamos trabalhando com um objeto para converter em array
-        const itens: ItemRetirada[] = Object.entries(data.itens).map(([nome, quantidade]) => ({
-          nome_produto: nome,
-          quantidade: typeof quantidade === 'number' ? quantidade : Number(quantidade)
-        })).filter(item => item.quantidade > 0);
-        
-        console.log("Itens processados para exibição:", itens);
-        setItensRetirados(itens);
-      }
-      
-    } catch (error: any) {
-      console.error("Error fetching pickup code:", error);
-      setError("Código de retirada não encontrado ou inválido.");
+
+      return true;
+    } catch (error) {
+      console.error("Erro ao verificar código:", error);
+      toast({
+        title: "Erro ao verificar código",
+        description:
+          "Ocorreu um erro ao verificar o código. Por favor, tente novamente.",
+        variant: "destructive",
+      });
+      return false;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-  
-  const confirmarEntrega = async () => {
-    if (!codigoRetirada) return;
-    
-    setLoading(true);
+
+  const confirmarRetirada = async () => {
     try {
-      // Atualizar a coluna "usado" para true
-      const { error } = await supabaseExtended
+      if (!codigoId || !pedidoId) {
+        throw new Error("Código ou pedido não identificado");
+      }
+
+      setIsLoading(true);
+
+      // Marcar o código como usado
+      const { error: updateCodigoError } = await supabaseExtended
         .from("codigos_retirada")
         .update({ usado: true })
-        .eq("id", codigoRetirada.id);
-      
-      if (error) {
-        console.error("Erro ao atualizar status do código:", error);
-        throw error;
+        .eq("id", codigoId);
+
+      if (updateCodigoError) {
+        throw updateCodigoError;
       }
-      
-      console.log("Entrega confirmada com sucesso, código marcado como usado");
-      setSuccess(true);
-      setCodigoInput("");
-      
-      toast({
-        title: "Retirada confirmada",
-        description: "Os itens foram entregues com sucesso."
-      });
-      
-    } catch (error: any) {
+
+      // Para cada item retirado, atualizar a quantidade_restante no pedido_itens
+      for (const itemRetirada of itensRetirada) {
+        const itensPedido = pedido?.itens.filter(
+          (item) => item.nome_produto === itemRetirada.produto
+        );
+
+        if (!itensPedido || itensPedido.length === 0) continue;
+
+        let quantidadeRestante = itemRetirada.quantidade;
+
+        for (const item of itensPedido.sort((a, b) => a.id.localeCompare(b.id))) {
+          if (quantidadeRestante <= 0) break;
+
+          const quantidadeRetirada = Math.min(
+            item.quantidade_restante,
+            quantidadeRestante
+          );
+          const novaQuantidade = item.quantidade_restante - quantidadeRetirada;
+
+          // Atualizar no banco de dados
+          const { error } = await supabaseExtended
+            .from("pedido_itens")
+            .update({ quantidade_restante: novaQuantidade })
+            .eq("id", item.id);
+
+          if (error) throw error;
+
+          quantidadeRestante -= quantidadeRetirada;
+        }
+      }
+
+      setIsSuccess(true);
+    } catch (error) {
+      console.error("Erro ao confirmar retirada:", error);
       toast({
         title: "Erro ao confirmar retirada",
-        description: error.message,
-        variant: "destructive"
+        description:
+          "Ocorreu um erro ao confirmar a retirada. Por favor, tente novamente.",
+        variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
-  
-  const resetForm = () => {
-    setCodigoInput("");
-    setCodigoRetirada(null);
+
+  const resetarCodigo = () => {
+    setCodigo("");
     setPedido(null);
-    setItensRetirados([]);
-    setError(null);
-    setSuccess(false);
+    setItensRetirada([]);
+    setIsSuccess(false);
+    setPedidoId(null);
+    setBarId(null);
+    setCodigoId(null);
   };
-  
+
   return {
-    codigoInput,
-    setCodigoInput,
-    loading,
-    codigoRetirada,
+    codigo,
+    handleCodigo,
+    verificarCodigo,
+    confirmarRetirada,
+    resetarCodigo,
     pedido,
-    itensRetirados,
-    error,
-    success,
-    handleCodigoChange,
-    buscarCodigo,
-    confirmarEntrega,
-    resetForm
+    itensRetirada,
+    isLoading,
+    isSuccess,
+    formatarPreco,
   };
 };

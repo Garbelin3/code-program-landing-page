@@ -18,6 +18,9 @@ export interface Pedido {
   created_at: string;
   valor_total: number;
   status?: string;
+  data_criacao?: string;
+  data_pagamento?: string;
+  stripe_session_id?: string;
   bar: Bar;
   itens: PedidoItem[];
 }
