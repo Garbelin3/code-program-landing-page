@@ -181,7 +181,7 @@ export const useCodigoRetirada = () => {
     loading,
     codigoRetirada,
     pedido,
-    itemRetirados,
+    itensRetirados,
     error,
     success,
     handleCodigoChange,
