@@ -36,9 +36,9 @@ export default function PedidoConfirmado() {
         if (error) throw error;
         setPedido(data);
         
-        // If the order is not paid yet, verify payment status
-        if (data && data.status !== "pago") {
-          verifyPayment();
+        // If the order has a stripe_session_id, verify its payment status immediately
+        if (data && data.stripe_session_id) {
+          await verifyStripePayment(data.stripe_session_id);
         }
       } catch (error: any) {
         toast({
@@ -55,8 +55,8 @@ export default function PedidoConfirmado() {
     
     // Set up interval to check payment status every 5 seconds if not paid
     const intervalId = setInterval(() => {
-      if (pedido && pedido.status !== "pago") {
-        verifyPayment();
+      if (pedido && pedido.status !== "pago" && pedido.stripe_session_id) {
+        verifyStripePayment(pedido.stripe_session_id);
       } else {
         clearInterval(intervalId);
       }
@@ -65,30 +65,61 @@ export default function PedidoConfirmado() {
     return () => clearInterval(intervalId);
   }, [pedidoId, pedido?.status]);
   
-  const verifyPayment = async () => {
-    if (!pedidoId || verifying) return;
+  const verifyStripePayment = async (sessionId: string) => {
+    if (verifying) return;
     
     try {
       setVerifying(true);
       
-      const { data, error } = await supabase.functions.invoke("verify-payment", {
-        body: { pedidoId }
+      console.log("Verifying Stripe payment for session:", sessionId);
+      const { data, error } = await supabase.functions.invoke("verify-stripe-payment", {
+        body: { sessionId }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error invoking verify-stripe-payment function:", error);
+        throw error;
+      }
       
-      if (data.status === "success") {
-        setPedido(data.order);
-        toast({
-          title: "Pagamento confirmado",
-          description: "Seu pagamento foi processado com sucesso!",
-          variant: "default",
-        });
+      console.log("Stripe payment verification result:", data);
+      
+      if (data.paid) {
+        // Refresh order data
+        const { data: updatedOrder, error: refreshError } = await supabase
+          .from("pedidos")
+          .select(`
+            id,
+            valor_total,
+            status,
+            data_pagamento,
+            stripe_session_id,
+            bar:bar_id (name, address)
+          `)
+          .eq("id", pedidoId)
+          .single();
+          
+        if (!refreshError && updatedOrder) {
+          setPedido(updatedOrder);
+          
+          if (updatedOrder.status === "pago") {
+            toast({
+              title: "Pagamento confirmado",
+              description: "Seu pagamento foi processado com sucesso!",
+              variant: "default",
+            });
+          }
+        }
       }
     } catch (error: any) {
       console.error("Error verifying payment:", error);
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handleVerifyPaymentClick = () => {
+    if (pedido?.stripe_session_id) {
+      verifyStripePayment(pedido.stripe_session_id);
     }
   };
 
@@ -141,7 +172,7 @@ export default function PedidoConfirmado() {
                 <Button 
                   variant="outline" 
                   disabled={verifying} 
-                  onClick={verifyPayment}
+                  onClick={handleVerifyPaymentClick}
                   className="mt-2"
                 >
                   {verifying ? "Verificando..." : "Verificar pagamento"}

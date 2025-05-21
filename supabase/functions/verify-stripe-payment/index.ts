@@ -25,7 +25,7 @@ serve(async (req) => {
     if (!sessionId) {
       console.error("No Stripe session ID provided");
       return new Response(
-        JSON.stringify({ error: "Stripe session ID is required" }),
+        JSON.stringify({ error: "Stripe session ID is required", paid: false }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -54,7 +54,7 @@ serve(async (req) => {
     if (orderError) {
       console.error(`Error fetching order with session ID ${sessionId}:`, orderError);
       return new Response(
-        JSON.stringify({ error: `Order not found: ${orderError.message}` }),
+        JSON.stringify({ error: `Order not found: ${orderError.message}`, paid: false }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -62,7 +62,7 @@ serve(async (req) => {
     if (!order) {
       console.error(`No order found with session ID: ${sessionId}`);
       return new Response(
-        JSON.stringify({ error: "Order not found" }),
+        JSON.stringify({ error: "Order not found", paid: false }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -84,10 +84,12 @@ serve(async (req) => {
     }
 
     // Retrieve the session from Stripe
+    console.log(`Retrieving Stripe session: ${sessionId}`);
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     console.log(`Retrieved Stripe session: ${session.id}, status: ${session.payment_status}`);
     
     if (session.payment_status === "paid") {
+      console.log(`Session ${session.id} is marked as paid, updating order status...`);
       // Update the order status to "pago" and set payment date
       const { error: updateError } = await supabaseClient
         .from("pedidos")
