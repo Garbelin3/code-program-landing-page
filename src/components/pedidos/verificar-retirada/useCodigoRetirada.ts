@@ -85,8 +85,8 @@ export const useCodigoRetirada = () => {
         throw new Error("Não foi possível obter detalhes do pedido");
       }
       
-      // Extrair informações do bar do pedido
-      const bar = {
+      // Extrair informações do bar do pedido - Fixed the bar property access
+      const bar: BarInfo = {
         id: pedidoData.bar.id,
         name: pedidoData.bar.name,
         address: pedidoData.bar.address
