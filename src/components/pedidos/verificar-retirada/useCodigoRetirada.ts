@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatarPreco } from "./utils";
-import { PedidoBasic } from "@/types/pedidos";
+import { PedidoBasic, BarInfo } from "./types";
 
 interface Item {
   id: string;
@@ -26,17 +26,13 @@ interface InfoPedido {
   valor_total: number;
   status: string;
   user_id: string;
-  bar: {
-    id: string;
-    name: string;
-    address: string;
-  };
+  bar: BarInfo;
   itens: Item[];
 }
 
 export const useCodigoRetirada = () => {
   const { toast } = useToast();
-  const [codigoInput, setCodigoInput] = useState("");
+  const [codigo, setCodigoInput] = useState("");
   const [loading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pedido, setPedido] = useState<InfoPedido | null>(null);
@@ -47,15 +43,15 @@ export const useCodigoRetirada = () => {
   const [codigoId, setCodigoId] = useState<string | null>(null);
   const [codigoRetirada, setCodigoRetirada] = useState<any | null>(null);
 
-  const handleCodigoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCodigo = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCodigoInput(e.target.value);
     setError(null);
   };
 
-  const buscarCodigo = async (automatico = false, codigoExplicito?: string) => {
+  const verificarCodigo = async (automatico = false, codigoExplicito?: string) => {
     try {
-      const codigo = codigoExplicito || codigoInput;
-      if (!codigo || codigo.length < 6) {
+      const codigoAtual = codigoExplicito || codigo;
+      if (!codigoAtual || codigoAtual.length < 6) {
         setError("Por favor, insira um código de 6 dígitos");
         return false;
       }
@@ -67,7 +63,7 @@ export const useCodigoRetirada = () => {
       const { data: codigoData, error: codigoError } = await supabaseExtended
         .from("codigos_retirada")
         .select("*")
-        .eq("codigo", codigo)
+        .eq("codigo", codigoAtual)
         .eq("usado", false)
         .eq("invalidado", false)
         .maybeSingle();
@@ -159,7 +155,7 @@ export const useCodigoRetirada = () => {
     }
   };
 
-  const confirmarEntrega = async () => {
+  const confirmarRetirada = async () => {
     try {
       if (!codigoId || !pedidoId) {
         throw new Error("Código ou pedido não identificado");
@@ -217,7 +213,7 @@ export const useCodigoRetirada = () => {
     }
   };
 
-  const resetForm = () => {
+  const resetarCodigo = () => {
     setCodigoInput("");
     setPedido(null);
     setItensRetirada([]);
@@ -230,16 +226,16 @@ export const useCodigoRetirada = () => {
   };
 
   return {
-    codigoInput,
+    codigo,
     loading,
     codigoRetirada,
     pedido,
     error,
     success,
-    handleCodigoChange,
-    buscarCodigo,
-    confirmarEntrega,
-    resetForm,
+    handleCodigo,
+    verificarCodigo,
+    confirmarRetirada,
+    resetarCodigo,
     setCodigoInput,
     formatarPreco,
   };

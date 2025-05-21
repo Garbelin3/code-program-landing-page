@@ -44,6 +44,7 @@ export type Database = {
           codigo: string
           created_at: string
           id: string
+          invalidado: boolean | null
           itens: Json
           pedido_id: string
           usado: boolean | null
@@ -52,6 +53,7 @@ export type Database = {
           codigo: string
           created_at?: string
           id?: string
+          invalidado?: boolean | null
           itens: Json
           pedido_id: string
           usado?: boolean | null
@@ -60,6 +62,7 @@ export type Database = {
           codigo?: string
           created_at?: string
           id?: string
+          invalidado?: boolean | null
           itens?: Json
           pedido_id?: string
           usado?: boolean | null
@@ -129,8 +132,11 @@ export type Database = {
         Row: {
           bar_id: string
           created_at: string
+          data_criacao: string | null
+          data_pagamento: string | null
           id: string
           status: string
+          stripe_session_id: string | null
           updated_at: string
           user_id: string
           valor_total: number
@@ -138,8 +144,11 @@ export type Database = {
         Insert: {
           bar_id: string
           created_at?: string
+          data_criacao?: string | null
+          data_pagamento?: string | null
           id?: string
           status: string
+          stripe_session_id?: string | null
           updated_at?: string
           user_id: string
           valor_total: number
@@ -147,8 +156,11 @@ export type Database = {
         Update: {
           bar_id?: string
           created_at?: string
+          data_criacao?: string | null
+          data_pagamento?: string | null
           id?: string
           status?: string
+          stripe_session_id?: string | null
           updated_at?: string
           user_id?: string
           valor_total?: number

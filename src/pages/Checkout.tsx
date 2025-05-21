@@ -148,7 +148,7 @@ const Checkout = () => {
         
       if (itensError) throw itensError;
       
-      // Redirecionar para o pagamento Stripe
+      // Criar nova sessão de pagamento Stripe
       const { data: stripeData, error: stripeError } = await supabase.functions.invoke(
         "create-stripe-payment",
         {

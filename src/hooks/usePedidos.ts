@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { supabaseExtended } from "@/integrations/supabase/customClient";
 import { toast } from "@/hooks/use-toast";
-import { Pedido, PedidoItem, ItemAgregado } from "@/types/pedidos";
+import { Pedido, PedidoItem, ItemAgregado, Bar } from "@/types/pedidos";
 import { formatarPreco, formatarData } from "@/components/pedidos/verificar-retirada/utils";
 
 export const usePedidos = () => {
@@ -69,9 +68,9 @@ export const usePedidos = () => {
               valor_total: pedido.valor_total,
               status: pedido.status,
               bar: {
-                id: pedido.bar ? pedido.bar.id : "",
-                name: pedido.bar ? pedido.bar.name : "",
-                address: pedido.bar ? pedido.bar.address : ""
+                id: pedido.bar.id,
+                name: pedido.bar.name,
+                address: pedido.bar.address
               },
               itens: itensData || []
             };

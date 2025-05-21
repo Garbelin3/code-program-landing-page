@@ -1,3 +1,4 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, RefreshCw } from "lucide-react";
@@ -75,10 +76,10 @@ export const DetalhesRetirada = ({
               Realizado em {formatarData(pedido.created_at)}
             </p>
             <p className="text-sm mt-1 font-medium">
-              Local: {pedido.bars.name}
+              Local: {pedido.bar.name}
             </p>
             <p className="text-xs text-gray-500">
-              {pedido.bars.address}
+              {pedido.bar.address}
             </p>
           </div>
           <Badge className="bg-amber-500 mt-2 sm:mt-0 self-start">

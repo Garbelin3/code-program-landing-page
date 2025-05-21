@@ -11,16 +11,16 @@ import { toast } from "@/components/ui/use-toast";
 
 export const VerificarRetiradaContainer = () => {
   const {
-    codigoInput,
+    codigo: codigoInput,
+    handleCodigo: handleCodigoChange,
     loading,
-    codigoRetirada,
     pedido,
     error,
     success,
-    handleCodigoChange,
-    buscarCodigo,
-    confirmarEntrega,
-    resetForm,
+    codigoRetirada,
+    verificarCodigo: buscarCodigo,
+    confirmarRetirada: confirmarEntrega,
+    resetarCodigo: resetForm,
     setCodigoInput,
     formatarPreco
   } = useCodigoRetirada();

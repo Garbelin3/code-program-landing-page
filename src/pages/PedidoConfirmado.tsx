@@ -5,9 +5,16 @@ import { supabaseExtended } from '@/integrations/supabase/customClient';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Check, Clock } from 'lucide-react';
 import QRCode from 'qrcode.react';
-import { Pedido, Bar } from '@/types/pedidos';
+import { Bar } from '@/types/pedidos';
 import { useToast } from '@/hooks/use-toast';
 import { formatarPreco } from '@/components/pedidos/verificar-retirada/utils';
+
+interface PedidoItem {
+  id: string;
+  nome_produto: string;
+  quantidade: number;
+  preco_unitario: number;
+}
 
 interface SimplePedido {
   id: string;
@@ -17,12 +24,7 @@ interface SimplePedido {
   data_pagamento?: string;
   stripe_session_id?: string;
   bar: Bar;
-  itens: Array<{
-    id: string;
-    nome_produto: string;
-    quantidade: number;
-    preco_unitario: number;
-  }>;
+  itens: PedidoItem[];
 }
 
 const PedidoConfirmado = () => {
