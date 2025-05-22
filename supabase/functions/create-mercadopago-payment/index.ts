@@ -76,7 +76,8 @@ serve(async (req) => {
         auto_return: "approved",
         statement_descriptor: barData.name,
         external_reference: pedidoId,
-        notification_url: `${Deno.env.get("SUPABASE_URL")?.replace("https://", "https://meitoqhuhwqhzjywbxyf.functions.")}/mercadopago-webhook`
+        // Fix: using the correct format for the webhook URL
+        notification_url: `https://meitoqhuhwqhzjywbxyf.functions.supabase.co/mercadopago-webhook`
       })
     });
 

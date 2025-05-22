@@ -27,7 +27,9 @@ serve(async (req) => {
 
     // Check payment status with Mercado Pago API
     console.log("Checking payment with Mercado Pago API for pedido:", pedidoId);
-    const response = await fetch(
+    
+    // First try to search by external_reference (pedidoId)
+    const searchResponse = await fetch(
       `https://api.mercadopago.com/v1/payments/search?external_reference=${pedidoId}`,
       {
         method: "GET",
@@ -37,14 +39,15 @@ serve(async (req) => {
       }
     );
 
-    const paymentData = await response.json();
-    console.log("Payment data response:", paymentData);
-    
-    if (!response.ok) {
-      console.error("Error from Mercado Pago API:", paymentData);
-      throw new Error(`Erro ao verificar pagamento: ${paymentData.message || JSON.stringify(paymentData)}`);
+    if (!searchResponse.ok) {
+      const errorText = await searchResponse.text();
+      console.error(`Error searching payments by external reference: ${searchResponse.status}`, errorText);
+      throw new Error(`Error searching payments: ${searchResponse.status} ${errorText}`);
     }
 
+    const paymentData = await searchResponse.json();
+    console.log("Payment search response:", paymentData);
+    
     // Find approved payment
     const approvedPayment = paymentData.results.find(
       (payment: any) => payment.status === "approved"
@@ -83,6 +86,26 @@ serve(async (req) => {
         JSON.stringify({ paid: data?.[0]?.status === "pago", paymentId: approvedPayment.id }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // If no approved payment was found, check the pedido status one more time
+    // It might have been updated by the webhook
+    const { data: pedidoData, error: pedidoError } = await supabase
+      .from("pedidos")
+      .select("status")
+      .eq("id", pedidoId)
+      .single();
+      
+    if (pedidoError) {
+      console.error("Error checking pedido status:", pedidoError);
+    } else {
+      console.log("Current pedido status:", pedidoData?.status);
+      if (pedidoData?.status === "pago") {
+        return new Response(
+          JSON.stringify({ paid: true }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     return new Response(
