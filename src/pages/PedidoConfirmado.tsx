@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock } from "lucide-react";
@@ -14,12 +14,22 @@ export default function PedidoConfirmado() {
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Parse URL query parameters for Mercado Pago response
+  const searchParams = new URLSearchParams(location.search);
+  const paymentId = searchParams.get("payment_id");
+  const status = searchParams.get("status");
+  const collectionStatus = searchParams.get("collection_status");
+  const preferenceId = searchParams.get("preference_id");
+  const externalReference = searchParams.get("external_reference");
 
   useEffect(() => {
     const fetchPedido = async () => {
       if (!pedidoId) return;
 
       try {
+        console.log("Fetching pedido:", pedidoId);
         const { data, error } = await supabase
           .from("pedidos")
           .select(`
@@ -36,9 +46,28 @@ export default function PedidoConfirmado() {
 
         if (error) throw error;
 
+        console.log("Pedido fetched:", data);
         setPedido(data);
         pedidoRef.current = data;
 
+        // Process URL parameters from Mercado Pago
+        if (data && paymentId && (status === "approved" || collectionStatus === "approved")) {
+          console.log("Payment approved via URL parameters. Updating pedido status...");
+          await updatePedidoStatus(pedidoId);
+          return;
+        }
+
+        // Handle pending payments from URL parameters
+        if (data && paymentId && (status === "pending" || collectionStatus === "pending")) {
+          console.log("Payment pending via URL parameters. Will verify status...");
+          toast({
+            title: "Pagamento pendente",
+            description: "Seu pagamento está sendo processado. A página será atualizada automaticamente quando confirmado.",
+            variant: "default",
+          });
+        }
+
+        // Continue with regular verification
         if (data) {
           if (data.stripe_session_id) {
             await verifyStripePayment(data.stripe_session_id);
@@ -47,6 +76,7 @@ export default function PedidoConfirmado() {
           }
         }
       } catch (error: any) {
+        console.error("Error fetching pedido:", error);
         toast({
           title: "Erro ao carregar pedido",
           description: error.message,
@@ -59,17 +89,21 @@ export default function PedidoConfirmado() {
 
     fetchPedido();
 
+    // More aggressive polling for payment status
     const intervalId = setInterval(async () => {
       const currentPedido = pedidoRef.current;
 
       if (currentPedido && currentPedido.status !== "pago") {
+        console.log("Polling payment status...");
         if (currentPedido.stripe_session_id) {
           const checkPaid = await verifyStripePayment(currentPedido.stripe_session_id);
           if (checkPaid) {
             clearInterval(intervalId);
           }
-        } else if (currentPedido.mercadopago_preference_id) {
-          const checkPaid = await verifyMercadoPagoPayment(currentPedido.mercadopago_preference_id);
+        } else if (currentPedido.mercadopago_preference_id || preferenceId) {
+          // Use either stored preference ID or the one from URL
+          const prefId = currentPedido.mercadopago_preference_id || preferenceId;
+          const checkPaid = await verifyMercadoPagoPayment(prefId);
           if (checkPaid) {
             clearInterval(intervalId);
           }
@@ -77,15 +111,75 @@ export default function PedidoConfirmado() {
       } else if (currentPedido?.status === "pago") {
         clearInterval(intervalId);
       }
-    }, 3000);
+    }, 3000); // Check every 3 seconds
 
     return () => clearInterval(intervalId);
-  }, [pedidoId]);
+  }, [pedidoId, paymentId, status, collectionStatus, preferenceId, externalReference]);
 
   // Atualiza a ref sempre que o estado do pedido muda
   useEffect(() => {
     pedidoRef.current = pedido;
   }, [pedido]);
+
+  // New function to directly update pedido status based on URL parameters
+  const updatePedidoStatus = async (pedidoId: string) => {
+    try {
+      console.log("Updating pedido status directly from URL parameters");
+      setVerifying(true);
+      
+      // Update pedido status directly in database
+      const { data, error } = await supabase
+        .from("pedidos")
+        .update({
+          status: "pago",
+          data_pagamento: new Date().toISOString(),
+        })
+        .eq("id", pedidoId)
+        .select();
+      
+      if (error) {
+        console.error("Error updating pedido status:", error);
+        throw error;
+      }
+      
+      console.log("Successfully updated pedido status:", data);
+      
+      // Refresh pedido data
+      const { data: refreshedPedido, error: refreshError } = await supabase
+        .from("pedidos")
+        .select(`
+          id,
+          valor_total,
+          status,
+          data_pagamento,
+          stripe_session_id,
+          mercadopago_preference_id,
+          bar:bar_id (name, address)
+        `)
+        .eq("id", pedidoId)
+        .single();
+        
+      if (!refreshError && refreshedPedido) {
+        setPedido(refreshedPedido);
+        pedidoRef.current = refreshedPedido;
+        
+        toast({
+          title: "Pagamento confirmado",
+          description: "Seu pagamento foi processado com sucesso!",
+          variant: "default",
+        });
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error: any) {
+      console.error("Error in updatePedidoStatus:", error);
+      return false;
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const verifyStripePayment = async (sessionId: string) => {
     if (verifying) return false;
@@ -215,6 +309,9 @@ export default function PedidoConfirmado() {
       verifyStripePayment(currentPedido.stripe_session_id);
     } else if (currentPedido.mercadopago_preference_id) {
       verifyMercadoPagoPayment(currentPedido.mercadopago_preference_id);
+    } else if (preferenceId) {
+      // Use preference ID from URL if available
+      verifyMercadoPagoPayment(preferenceId);
     } else {
       toast({
         title: "Informações de pagamento não encontradas",
