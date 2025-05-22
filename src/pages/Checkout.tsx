@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -146,9 +147,9 @@ const Checkout = () => {
         
       if (itensError) throw itensError;
       
-      // Redirecionar para o pagamento Stripe
-      const { data: stripeData, error: stripeError } = await supabase.functions.invoke(
-        "create-stripe-payment",
+      // Redirecionar para o pagamento com Mercado Pago
+      const { data: mpData, error: mpError } = await supabase.functions.invoke(
+        "create-mercadopago-payment",
         {
           body: {
             pedidoId: pedido.id,
@@ -159,21 +160,21 @@ const Checkout = () => {
         }
       );
 
-      if (stripeError) {
-        throw stripeError;
+      if (mpError) {
+        throw mpError;
       }
 
-      if (stripeData.url) {
+      if (mpData.url) {
         // Limpar o carrinho após a criação do pedido
         setCart((prevCart) => {
           const { [barId as string]: _, ...restCart } = prevCart;
           return restCart;
         });
         
-        // Redirecionar para a página de pagamento do Stripe
-        window.location.href = stripeData.url;
+        // Redirecionar para a página de pagamento do Mercado Pago
+        window.location.href = mpData.url;
       } else {
-        throw new Error("Não foi possível criar a sessão de pagamento");
+        throw new Error("Não foi possível criar a preferência de pagamento");
       }
     } catch (error: any) {
       toast({
@@ -276,7 +277,7 @@ const Checkout = () => {
             >
               {processando ? "Processando..." : (
                 <>
-                  <CreditCard className="mr-2 h-4 w-4" /> Pagar com cartão
+                  <CreditCard className="mr-2 h-4 w-4" /> Pagar com Mercado Pago
                 </>
               )}
             </Button>

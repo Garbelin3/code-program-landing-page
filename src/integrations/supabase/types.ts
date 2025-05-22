@@ -135,6 +135,7 @@ export type Database = {
           data_criacao: string | null
           data_pagamento: string | null
           id: string
+          mercadopago_preference_id: string | null
           status: string
           stripe_session_id: string | null
           updated_at: string
@@ -147,6 +148,7 @@ export type Database = {
           data_criacao?: string | null
           data_pagamento?: string | null
           id?: string
+          mercadopago_preference_id?: string | null
           status: string
           stripe_session_id?: string | null
           updated_at?: string
@@ -159,6 +161,7 @@ export type Database = {
           data_criacao?: string | null
           data_pagamento?: string | null
           id?: string
+          mercadopago_preference_id?: string | null
           status?: string
           stripe_session_id?: string | null
           updated_at?: string

@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 export default function PedidoConfirmado() {
   const { id: pedidoId } = useParams();
   const [pedido, setPedido] = useState<any>(null);
-  const pedidoRef = useRef<any>(null); // <- Ref para manter o valor mais recente do pedido
+  const pedidoRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function PedidoConfirmado() {
             status,
             data_pagamento,
             stripe_session_id,
+            mercadopago_preference_id,
             bar:bar_id (name, address)
           `)
           .eq("id", pedidoId)
@@ -35,10 +37,14 @@ export default function PedidoConfirmado() {
         if (error) throw error;
 
         setPedido(data);
-        pedidoRef.current = data; // <- Atualiza a ref com o valor inicial
+        pedidoRef.current = data;
 
-        if (data && data.stripe_session_id) {
-          await verifyStripePayment(data.stripe_session_id);
+        if (data) {
+          if (data.stripe_session_id) {
+            await verifyStripePayment(data.stripe_session_id);
+          } else if (data.mercadopago_preference_id) {
+            await verifyMercadoPagoPayment(data.mercadopago_preference_id);
+          }
         }
       } catch (error: any) {
         toast({
@@ -56,10 +62,17 @@ export default function PedidoConfirmado() {
     const intervalId = setInterval(async () => {
       const currentPedido = pedidoRef.current;
 
-      if (currentPedido && currentPedido.status !== "pago" && currentPedido.stripe_session_id) {
-        const checkPaid = await verifyStripePayment(currentPedido.stripe_session_id);
-        if (checkPaid) {
-          clearInterval(intervalId);
+      if (currentPedido && currentPedido.status !== "pago") {
+        if (currentPedido.stripe_session_id) {
+          const checkPaid = await verifyStripePayment(currentPedido.stripe_session_id);
+          if (checkPaid) {
+            clearInterval(intervalId);
+          }
+        } else if (currentPedido.mercadopago_preference_id) {
+          const checkPaid = await verifyMercadoPagoPayment(currentPedido.mercadopago_preference_id);
+          if (checkPaid) {
+            clearInterval(intervalId);
+          }
         }
       } else if (currentPedido?.status === "pago") {
         clearInterval(intervalId);
@@ -111,7 +124,7 @@ export default function PedidoConfirmado() {
 
         if (!refreshError && updatedOrder) {
           setPedido(updatedOrder);
-          pedidoRef.current = updatedOrder; // <- Atualiza ref após mudança
+          pedidoRef.current = updatedOrder;
 
           if (updatedOrder.status === "pago") {
             toast({
@@ -127,7 +140,67 @@ export default function PedidoConfirmado() {
 
       return false;
     } catch (error: any) {
-      console.error("Erro ao verificar pagamento:", error);
+      console.error("Erro ao verificar pagamento Stripe:", error);
+      return false;
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const verifyMercadoPagoPayment = async (preferenceId: string) => {
+    if (verifying) return false;
+
+    try {
+      setVerifying(true);
+      console.log("Verificando pagamento Mercado Pago:", preferenceId);
+
+      const { data, error } = await supabase.functions.invoke("verify-mercadopago-payment", {
+        body: { 
+          preferenceId,
+          pedidoId
+         }
+      });
+
+      if (error) {
+        console.error("Erro ao chamar verify-mercadopago-payment:", error);
+        throw error;
+      }
+
+      console.log("Resultado da verificação Mercado Pago:", data);
+
+      if (data.paid) {
+        const { data: updatedOrder, error: refreshError } = await supabase
+          .from("pedidos")
+          .select(`
+            id,
+            valor_total,
+            status,
+            data_pagamento,
+            mercadopago_preference_id,
+            bar:bar_id (name, address)
+          `)
+          .eq("id", pedidoId)
+          .single();
+
+        if (!refreshError && updatedOrder) {
+          setPedido(updatedOrder);
+          pedidoRef.current = updatedOrder;
+
+          if (updatedOrder.status === "pago") {
+            toast({
+              title: "Pagamento confirmado",
+              description: "Seu pagamento foi processado com sucesso!",
+              variant: "default",
+            });
+
+            return true;
+          }
+        }
+      }
+
+      return false;
+    } catch (error: any) {
+      console.error("Erro ao verificar pagamento Mercado Pago:", error);
       return false;
     } finally {
       setVerifying(false);
@@ -135,8 +208,19 @@ export default function PedidoConfirmado() {
   };
 
   const handleVerifyPaymentClick = () => {
-    if (pedido?.stripe_session_id) {
-      verifyStripePayment(pedido.stripe_session_id);
+    const currentPedido = pedidoRef.current;
+    if (!currentPedido) return;
+
+    if (currentPedido.stripe_session_id) {
+      verifyStripePayment(currentPedido.stripe_session_id);
+    } else if (currentPedido.mercadopago_preference_id) {
+      verifyMercadoPagoPayment(currentPedido.mercadopago_preference_id);
+    } else {
+      toast({
+        title: "Informações de pagamento não encontradas",
+        description: "Não foi possível verificar o status do pagamento",
+        variant: "destructive",
+      });
     }
   };
 
