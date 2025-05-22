@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 export default function PedidoConfirmado() {
   const { id: pedidoId } = useParams();
   const [pedido, setPedido] = useState<any>(null);
+  const pedidoRef = useRef<any>(null); // <- Ref para manter o valor mais recente do pedido
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const navigate = useNavigate();
@@ -17,9 +17,8 @@ export default function PedidoConfirmado() {
   useEffect(() => {
     const fetchPedido = async () => {
       if (!pedidoId) return;
-      
+
       try {
-        // Fetch order details
         const { data, error } = await supabase
           .from("pedidos")
           .select(`
@@ -34,9 +33,10 @@ export default function PedidoConfirmado() {
           .single();
 
         if (error) throw error;
+
         setPedido(data);
-        
-        // If the order has a stripe_session_id, verify its payment status immediately
+        pedidoRef.current = data; // <- Atualiza a ref com o valor inicial
+
         if (data && data.stripe_session_id) {
           await verifyStripePayment(data.stripe_session_id);
         }
@@ -52,44 +52,50 @@ export default function PedidoConfirmado() {
     };
 
     fetchPedido();
-    
-    // Set up interval to check payment status every 3 seconds if not paid
+
     const intervalId = setInterval(async () => {
-      if (pedido && pedido.status !== "pago" && pedido.stripe_session_id) {
-        const checkPaid = await verifyStripePayment(pedido.stripe_session_id);
+      const currentPedido = pedidoRef.current;
+
+      if (currentPedido && currentPedido.status !== "pago" && currentPedido.stripe_session_id) {
+        const checkPaid = await verifyStripePayment(currentPedido.stripe_session_id);
         if (checkPaid) {
-          // Clear interval when payment is confirmed
           clearInterval(intervalId);
         }
-      } else if (pedido?.status === "pago") {
-        // Clear interval if already paid
+      } else if (currentPedido?.status === "pago") {
         clearInterval(intervalId);
       }
     }, 3000);
-    
+
     return () => clearInterval(intervalId);
   }, [pedidoId]);
-  
+
+  // Atualiza a ref sempre que o estado do pedido muda
+  useEffect(() => {
+    pedidoRef.current = pedido;
+  }, [pedido]);
+
   const verifyStripePayment = async (sessionId: string) => {
     if (verifying) return false;
-    
+
     try {
       setVerifying(true);
-      
-      console.log("Verifying Stripe payment for session:", sessionId);
+      console.log("Verificando pagamento Stripe:", sessionId);
+
       const { data, error } = await supabase.functions.invoke("verify-stripe-payment", {
-        body: { sessionId }
+        body: { 
+          sessionId,
+          pedidoId
+         }
       });
-      
+
       if (error) {
-        console.error("Error invoking verify-stripe-payment function:", error);
+        console.error("Erro ao chamar verify-stripe-payment:", error);
         throw error;
       }
-      
-      console.log("Stripe payment verification result:", data);
-      
+
+      console.log("Resultado da verificação Stripe:", data);
+
       if (data.paid) {
-        // Refresh order data
         const { data: updatedOrder, error: refreshError } = await supabase
           .from("pedidos")
           .select(`
@@ -102,26 +108,26 @@ export default function PedidoConfirmado() {
           `)
           .eq("id", pedidoId)
           .single();
-          
+
         if (!refreshError && updatedOrder) {
           setPedido(updatedOrder);
-          
+          pedidoRef.current = updatedOrder; // <- Atualiza ref após mudança
+
           if (updatedOrder.status === "pago") {
             toast({
               title: "Pagamento confirmado",
               description: "Seu pagamento foi processado com sucesso!",
               variant: "default",
             });
-            
-            // Return true to indicate payment was successful
+
             return true;
           }
         }
       }
-      
+
       return false;
     } catch (error: any) {
-      console.error("Error verifying payment:", error);
+      console.error("Erro ao verificar pagamento:", error);
       return false;
     } finally {
       setVerifying(false);
@@ -180,9 +186,9 @@ export default function PedidoConfirmado() {
               <CardTitle>Aguardando confirmação</CardTitle>
               <CardDescription>Estamos processando seu pagamento.</CardDescription>
               <div className="mt-4">
-                <Button 
-                  variant="outline" 
-                  disabled={verifying} 
+                <Button
+                  variant="outline"
+                  disabled={verifying}
                   onClick={handleVerifyPaymentClick}
                   className="mt-2"
                 >
@@ -197,21 +203,21 @@ export default function PedidoConfirmado() {
             <h3 className="font-medium text-lg">{pedido.bar.name}</h3>
             <p className="text-muted-foreground text-sm">{pedido.bar.address}</p>
           </div>
-          
+
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Valor total:</span>
             <span className="font-semibold">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.valor_total)}
             </span>
           </div>
-          
+
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Status:</span>
             <span className={`font-semibold ${pedido.status === "pago" ? "text-green-600" : "text-yellow-600"}`}>
               {pedido.status === "pago" ? "Pago" : "Aguardando pagamento"}
             </span>
           </div>
-          
+
           <div className="mt-6 pt-4 border-t text-center">
             <Link to="/meus-pedidos">
               <Button className="w-full">Ver meus pedidos</Button>
