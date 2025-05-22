@@ -15,6 +15,8 @@ serve(async (req) => {
 
   try {
     const { preferenceId, pedidoId } = await req.json();
+    
+    console.log("Verifying payment for:", preferenceId, pedidoId);
 
     if (!preferenceId || !pedidoId) {
       return new Response(
@@ -24,6 +26,7 @@ serve(async (req) => {
     }
 
     // Check payment status with Mercado Pago API
+    console.log("Checking payment with Mercado Pago API for pedido:", pedidoId);
     const response = await fetch(
       `https://api.mercadopago.com/v1/payments/search?external_reference=${pedidoId}`,
       {
@@ -35,8 +38,10 @@ serve(async (req) => {
     );
 
     const paymentData = await response.json();
+    console.log("Payment data response:", paymentData);
     
     if (!response.ok) {
+      console.error("Error from Mercado Pago API:", paymentData);
       throw new Error(`Erro ao verificar pagamento: ${paymentData.message || JSON.stringify(paymentData)}`);
     }
 
@@ -44,6 +49,8 @@ serve(async (req) => {
     const approvedPayment = paymentData.results.find(
       (payment: any) => payment.status === "approved"
     );
+    
+    console.log("Approved payment found:", approvedPayment ? "Yes" : "No");
 
     // Create Supabase client with service role key
     const supabase = createClient(
@@ -52,6 +59,7 @@ serve(async (req) => {
     );
 
     if (approvedPayment) {
+      console.log("Updating pedido status to 'pago'");
       // Update pedido status to "pago"
       const { data, error } = await supabase
         .from("pedidos")
@@ -63,12 +71,14 @@ serve(async (req) => {
         .select("id, status");
 
       if (error) {
+        console.error("Error updating pedido:", error);
         return new Response(
           JSON.stringify({ error: error.message }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
+      console.log("Pedido updated successfully:", data);
       return new Response(
         JSON.stringify({ paid: data?.[0]?.status === "pago", paymentId: approvedPayment.id }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -81,6 +91,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
+    console.error("Internal server error:", error);
     return new Response(
       JSON.stringify({ error: "Erro interno no servidor", detail: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

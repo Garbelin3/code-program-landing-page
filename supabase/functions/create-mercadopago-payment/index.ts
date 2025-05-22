@@ -38,8 +38,12 @@ serve(async (req) => {
       .single();
 
     if (barError) {
+      console.error("Bar error:", barError);
       throw new Error(`Erro ao buscar informações do bar: ${barError.message}`);
     }
+
+    console.log("Bar data:", barData);
+    console.log("Creating Mercado Pago items with:", items);
 
     // Prepare items for Mercado Pago
     const mpItems = items.map((item: any) => ({
@@ -50,6 +54,9 @@ serve(async (req) => {
       currency_id: "BRL",
       unit_price: parseFloat(item.preco)
     }));
+
+    console.log("Mercado Pago items:", mpItems);
+    console.log("Using access token:", Deno.env.get("MERCADOPAGO_ACCESS_TOKEN")?.substring(0, 5) + "...");
 
     // Create Mercado Pago preference
     const mpApiUrl = "https://api.mercadopago.com/checkout/preferences";
@@ -74,8 +81,10 @@ serve(async (req) => {
     });
 
     const mpData = await response.json();
+    console.log("Mercado Pago response:", mpData);
 
     if (!response.ok) {
+      console.error("Mercado Pago API error:", mpData);
       throw new Error(`Erro ao criar preferência de pagamento: ${mpData.message || JSON.stringify(mpData)}`);
     }
 
@@ -86,6 +95,7 @@ serve(async (req) => {
       .eq("id", pedidoId);
 
     if (updateError) {
+      console.error("Update error:", updateError);
       throw new Error(`Erro ao atualizar pedido: ${updateError.message}`);
     }
 

@@ -16,8 +16,14 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Received webhook notification");
+    
     const body = await req.text();
     const signature = req.headers.get("x-signature");
+    
+    // Log the webhook request details
+    console.log("Webhook body:", body);
+    console.log("Webhook signature:", signature);
     
     // Verify webhook signature if available
     if (signature) {
@@ -29,6 +35,9 @@ serve(async (req) => {
           
         if (signature !== generatedSignature) {
           console.error("Invalid webhook signature");
+          console.log("Expected:", generatedSignature);
+          console.log("Received:", signature);
+          
           return new Response(
             JSON.stringify({ error: "Assinatura inválida" }),
             { status: 401, headers: { "Content-Type": "application/json" } }
@@ -39,11 +48,12 @@ serve(async (req) => {
 
     // Parse notification data
     const data = JSON.parse(body);
-    console.log("Received webhook notification:", data);
+    console.log("Parsed data:", data);
 
     // Check if it's a payment notification
     if (data.type === "payment") {
       const paymentId = data.data.id;
+      console.log("Processing payment notification for payment ID:", paymentId);
       
       // Fetch payment details from Mercado Pago
       const response = await fetch(
@@ -56,14 +66,18 @@ serve(async (req) => {
       );
 
       const payment = await response.json();
+      console.log("Payment details:", payment);
       
       if (payment.status === "approved") {
         const pedidoId = payment.external_reference;
         
         if (!pedidoId) {
+          console.error("External reference (pedidoId) not found");
           throw new Error("External reference (pedidoId) não encontrada");
         }
 
+        console.log("Updating pedido:", pedidoId);
+        
         // Update order status in database
         const supabase = createClient(
           Deno.env.get("SUPABASE_URL")!,
@@ -80,10 +94,11 @@ serve(async (req) => {
           .select("id, status");
 
         if (error) {
+          console.error("Error updating pedido:", error);
           throw new Error(`Erro ao atualizar pedido: ${error.message}`);
         }
 
-        console.log(`Pedido ${pedidoId} atualizado para status "pago"`);
+        console.log(`Pedido ${pedidoId} updated to status "pago"`, updateData);
         
         return new Response(
           JSON.stringify({ success: true, orderId: pedidoId }),
