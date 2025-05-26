@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +46,6 @@ export default function PedidoConfirmado() {
             valor_total,
             status,
             data_pagamento,
-            stripe_session_id,
             mercadopago_preference_id,
             bar:bar_id (
               name,
@@ -79,10 +79,8 @@ export default function PedidoConfirmado() {
         // Continue with regular verification for orders without status or with Mercado Pago preference
         if (data) {
           // Check if order has no status (NULL) or if we have payment info to verify
-          if (!data.status || data.stripe_session_id || data.mercadopago_preference_id || preferenceId) {
-            if (data.stripe_session_id) {
-              await verifyStripePayment(data.stripe_session_id);
-            } else if (data.mercadopago_preference_id || preferenceId) {
+          if (!data.status || data.mercadopago_preference_id || preferenceId) {
+            if (data.mercadopago_preference_id || preferenceId) {
               const prefId = data.mercadopago_preference_id || preferenceId;
               await verifyMercadoPagoPayment(prefId);
             }
@@ -114,12 +112,7 @@ export default function PedidoConfirmado() {
 
       if (currentPedido && currentPedido.status !== "pago") {
         console.log("Polling payment status...");
-        if (currentPedido.stripe_session_id) {
-          const checkPaid = await verifyStripePayment(currentPedido.stripe_session_id);
-          if (checkPaid) {
-            clearInterval(intervalId);
-          }
-        } else if (currentPedido.mercadopago_preference_id || preferenceId) {
+        if (currentPedido.mercadopago_preference_id || preferenceId) {
           // Use either stored preference ID or the one from URL
           const prefId = currentPedido.mercadopago_preference_id || preferenceId;
           const checkPaid = await verifyMercadoPagoPayment(prefId);
@@ -187,7 +180,6 @@ export default function PedidoConfirmado() {
           valor_total,
           status,
           data_pagamento,
-          stripe_session_id,
           mercadopago_preference_id,
           bar:bar_id (
             name,
@@ -207,69 +199,6 @@ export default function PedidoConfirmado() {
       return false;
     } catch (error: any) {
       console.error("Error in updatePedidoStatus:", error);
-      return false;
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const verifyStripePayment = async (sessionId: string) => {
-    if (verifying) return false;
-
-    try {
-      setVerifying(true);
-      console.log("Verificando pagamento Stripe:", sessionId);
-
-      const { data, error } = await supabase.functions.invoke("verify-stripe-payment", {
-        body: {
-          sessionId,
-          pedidoId
-         }
-      });
-
-      if (error) {
-        console.error("Erro ao chamar verify-stripe-payment:", error);
-        throw error;
-      }
-
-      console.log("Resultado da verificação Stripe:", data);
-
-      if (data.paid) {
-        const { data: updatedOrder, error: refreshError } = await supabase
-          .from("pedidos")
-          .select(`
-            id,
-            valor_total,
-            status,
-            data_pagamento,
-            stripe_session_id,
-            bar:bar_id (
-              name,
-              address
-            )
-          `)
-          .eq("id", pedidoId)
-          .single();
-
-        if (!refreshError && updatedOrder) {
-          setPedido(updatedOrder);
-          pedidoRef.current = updatedOrder;
-
-          if (updatedOrder.status === "pago") {
-            toast({
-              title: "Pagamento confirmado",
-              description: "Redirecionando para seus pedidos...",
-              variant: "default",
-            });
-
-            return true;
-          }
-        }
-      }
-
-      return false;
-    } catch (error: any) {
-      console.error("Erro ao verificar pagamento Stripe:", error);
       return false;
     } finally {
       setVerifying(false);
@@ -343,9 +272,7 @@ export default function PedidoConfirmado() {
     const currentPedido = pedidoRef.current;
     if (!currentPedido) return;
 
-    if (currentPedido.stripe_session_id) {
-      verifyStripePayment(currentPedido.stripe_session_id);
-    } else if (currentPedido.mercadopago_preference_id) {
+    if (currentPedido.mercadopago_preference_id) {
       verifyMercadoPagoPayment(currentPedido.mercadopago_preference_id);
     } else if (preferenceId) {
       // Use preference ID from URL if available
