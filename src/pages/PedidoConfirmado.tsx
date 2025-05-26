@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,7 +53,13 @@ export default function PedidoConfirmado() {
         // Process URL parameters from Mercado Pago
         if (data && paymentId && (status === "approved" || collectionStatus === "approved")) {
           console.log("Payment approved via URL parameters. Updating pedido status...");
-          await updatePedidoStatus(pedidoId);
+          const success = await updatePedidoStatus(pedidoId);
+          if (success) {
+            // Redirect to "meus pedidos" after successful payment
+            setTimeout(() => {
+              navigate("/meus-pedidos");
+            }, 2000);
+          }
           return;
         }
 
@@ -102,6 +109,10 @@ export default function PedidoConfirmado() {
           const checkPaid = await verifyStripePayment(currentPedido.stripe_session_id);
           if (checkPaid) {
             clearInterval(intervalId);
+            // Redirect to "meus pedidos" after successful payment
+            setTimeout(() => {
+              navigate("/meus-pedidos");
+            }, 2000);
           }
         } else if (currentPedido.mercadopago_preference_id || preferenceId) {
           // Use either stored preference ID or the one from URL
@@ -109,6 +120,10 @@ export default function PedidoConfirmado() {
           const checkPaid = await verifyMercadoPagoPayment(prefId);
           if (checkPaid) {
             clearInterval(intervalId);
+            // Redirect to "meus pedidos" after successful payment
+            setTimeout(() => {
+              navigate("/meus-pedidos");
+            }, 2000);
           }
         }
       } else if (currentPedido?.status === "pago") {
@@ -117,7 +132,7 @@ export default function PedidoConfirmado() {
     }, 3000); // Check every 3 seconds
 
     return () => clearInterval(intervalId);
-  }, [pedidoId, paymentId, status, collectionStatus, preferenceId, externalReference]);
+  }, [pedidoId, paymentId, status, collectionStatus, preferenceId, externalReference, navigate]);
 
   // Atualiza a ref sempre que o estado do pedido muda
   useEffect(() => {
@@ -168,7 +183,7 @@ export default function PedidoConfirmado() {
         
         toast({
           title: "Pagamento confirmado",
-          description: "Seu pagamento foi processado com sucesso!",
+          description: "Redirecionando para seus pedidos...",
           variant: "default",
         });
         
@@ -226,7 +241,7 @@ export default function PedidoConfirmado() {
           if (updatedOrder.status === "pago") {
             toast({
               title: "Pagamento confirmado",
-              description: "Seu pagamento foi processado com sucesso!",
+              description: "Redirecionando para seus pedidos...",
               variant: "default",
             });
 
@@ -286,7 +301,7 @@ export default function PedidoConfirmado() {
           if (updatedOrder.status === "pago") {
             toast({
               title: "Pagamento confirmado",
-              description: "Seu pagamento foi processado com sucesso!",
+              description: "Redirecionando para seus pedidos...",
               variant: "default",
             });
 
