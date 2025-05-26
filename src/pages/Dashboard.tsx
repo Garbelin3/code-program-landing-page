@@ -9,7 +9,6 @@ import { LogOut } from "lucide-react";
 import { BarList } from "@/components/BarList";
 import { GerenciarCardapio } from "@/components/produtos/GerenciarCardapio";
 import { VerificarRetirada } from "@/components/pedidos/VerificarRetirada";
-
 interface BarData {
   id: string;
   name: string;
@@ -122,16 +121,14 @@ const Dashboard = ({
         <div className="container mx-auto py-4 px-6 flex justify-between item-center">
           <div className="flex item-center">
             <h1 className="text-2xl font-bold text-gray-900">PedeBar</h1>
-            {profileData && profileData.role !== 'user' && <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+            {profileData && profileData.role !== 'user' && <span className="ml-3 px-2 bg-blue-100 text-blue-800 text-xs rounded-full py-[10px]">
                 {profileData.role === 'dono' ? 'Dono' : profileData.role === 'funcionario' ? 'Funcionário' : profileData.role === 'caixa' ? 'Caixa' : 'Admin'}
               </span>}
           </div>
           <div className="flex item-center space-x-2 sm:space-x-4">
-            {profileData && profileData.role === 'user' && (
-              <Link to="/meus-pedidos">
+            {profileData && profileData.role === 'user' && <Link to="/meus-pedidos">
                 <Button className="w-full sm:w-auto">Meus Pedidos</Button>
-              </Link>
-            )}
+              </Link>}
             <Button variant="outline" onClick={handleLogout} className="flex item-center gap-2">
               <LogOut className="h-4 w-4" /> Sair
             </Button>
@@ -193,26 +190,13 @@ const OwnerDashboard = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="p-4 bg-white rounded-lg shadow">
-              <h3 className="font-semibold text-lg sm:text-xl">Informações do Bar</h3>
-              {barData ? <div className="mt-2 space-y-1">
-                  <p><span className="font-medium">Nome:</span> {barData.name}</p>
-                  <p><span className="font-medium">Endereço:</span> {barData.address || "Não informado"}</p>
-                </div> : <p className="text-red-500">Dados do bar não encontrados</p>}
-            </div>
+            
             
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="border rounded-md p-4 bg-indigo-50 col-span-1 md:col-span-3">
-                {barData && (
-                  <GerenciarCardapio 
-                    barId={barData.id} 
-                    barName={barData.name} 
-                  />
-                )}
+                {barData && <GerenciarCardapio barId={barData.id} barName={barData.name} />}
               </div>
-              <div className="border rounded-md p-4 bg-purple-50 flex item-center justify-center">
-                <h4 className="font-bold text-purple-700 text-center text-base sm:text-lg">Gerenciar Funcionários</h4>
-              </div>
+              
               <div className="border rounded-md p-4 bg-amber-50 flex item-center justify-center">
                 <h4 className="font-bold text-amber-700 text-center text-base sm:text-lg">Relatórios Financeiros</h4>
               </div>
@@ -231,8 +215,7 @@ const EmployeeDashboard = ({
   profileData: ProfileData;
   barData: BarData | null;
 }) => {
-  return (
-    <>
+  return <>
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-2xl sm:text-3xl">Painel do Funcionário</CardTitle>
@@ -252,11 +235,8 @@ const EmployeeDashboard = ({
           </div>
         </CardContent>
       </Card>
-    </>
-  );
+    </>;
 };
-
-
 
 // Cashier Dashboard Component
 const CashierDashboard = ({
