@@ -1,9 +1,8 @@
-
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -13,6 +12,7 @@ export default function PedidoConfirmado() {
   const pedidoRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
+  const [showRedirectMessage, setShowRedirectMessage] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,6 +25,11 @@ export default function PedidoConfirmado() {
   const externalReference = searchParams.get("external_reference");
 
   useEffect(() => {
+    // Check if user is returning from payment (has payment parameters)
+    if (paymentId || preferenceId) {
+      setShowRedirectMessage(true);
+    }
+
     const fetchPedido = async () => {
       if (!pedidoId) return;
 
@@ -55,10 +60,12 @@ export default function PedidoConfirmado() {
           console.log("Payment approved via URL parameters. Updating pedido status...");
           const success = await updatePedidoStatus(pedidoId);
           if (success) {
-            // Redirect to "meus pedidos" after successful payment
-            setTimeout(() => {
-              navigate("/meus-pedidos");
-            }, 2000);
+            // Show success message but don't auto-redirect
+            toast({
+              title: "Pagamento confirmado",
+              description: "Seu pagamento foi processado com sucesso!",
+              variant: "default",
+            });
           }
           return;
         }
@@ -68,7 +75,7 @@ export default function PedidoConfirmado() {
           console.log("Payment pending via URL parameters. Will verify status...");
           toast({
             title: "Pagamento pendente",
-            description: "Seu pagamento está sendo processado. A página será atualizada automaticamente quando confirmado.",
+            description: "Seu pagamento está sendo processado. Aguarde a confirmação.",
             variant: "default",
           });
         }
@@ -109,10 +116,6 @@ export default function PedidoConfirmado() {
           const checkPaid = await verifyStripePayment(currentPedido.stripe_session_id);
           if (checkPaid) {
             clearInterval(intervalId);
-            // Redirect to "meus pedidos" after successful payment
-            setTimeout(() => {
-              navigate("/meus-pedidos");
-            }, 2000);
           }
         } else if (currentPedido.mercadopago_preference_id || preferenceId) {
           // Use either stored preference ID or the one from URL
@@ -120,10 +123,6 @@ export default function PedidoConfirmado() {
           const checkPaid = await verifyMercadoPagoPayment(prefId);
           if (checkPaid) {
             clearInterval(intervalId);
-            // Redirect to "meus pedidos" after successful payment
-            setTimeout(() => {
-              navigate("/meus-pedidos");
-            }, 2000);
           }
         }
       } else if (currentPedido?.status === "pago") {
@@ -180,12 +179,6 @@ export default function PedidoConfirmado() {
       if (!refreshError && refreshedPedido) {
         setPedido(refreshedPedido);
         pedidoRef.current = refreshedPedido;
-        
-        toast({
-          title: "Pagamento confirmado",
-          description: "Redirecionando para seus pedidos...",
-          variant: "default",
-        });
         
         return true;
       }
@@ -363,6 +356,54 @@ export default function PedidoConfirmado() {
             <Link to="/">
               <Button>Voltar para a página inicial</Button>
             </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show redirect message when user returns from payment
+  if (showRedirectMessage) {
+    return (
+      <div className="container mx-auto py-12 max-w-md">
+        <Card>
+          <CardHeader className="text-center">
+            <CheckCircle className="mx-auto text-green-500 h-16 w-16 mb-4" />
+            <CardTitle>Obrigado pelo seu pedido!</CardTitle>
+            <CardDescription>
+              {pedido.status === "pago" 
+                ? "Seu pagamento foi confirmado com sucesso." 
+                : "Seu pedido foi registrado e estamos processando o pagamento."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="border-t pt-4">
+              <h3 className="font-medium text-lg">{pedido.bar.name}</h3>
+              <p className="text-muted-foreground text-sm">{pedido.bar.address}</p>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Valor total:</span>
+              <span className="font-semibold">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.valor_total)}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Status:</span>
+              <span className={`font-semibold ${pedido.status === "pago" ? "text-green-600" : "text-yellow-600"}`}>
+                {pedido.status === "pago" ? "Pago" : "Processando pagamento"}
+              </span>
+            </div>
+
+            <div className="mt-6 pt-4 border-t">
+              <Button className="w-full" asChild>
+                <Link to="/meus-pedidos" className="flex items-center justify-center gap-2">
+                  Ver meus pedidos
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
