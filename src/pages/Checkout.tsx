@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -117,14 +116,14 @@ const Checkout = () => {
     setProcessando(true);
     
     try {
-      // Salvar o pedido no banco de dados
+      // Salvar o pedido no banco de dados SEM status inicial (deixar NULL)
       const { data: pedido, error: pedidoError } = await supabaseExtended
         .from("pedidos")
         .insert({
           user_id: user.id,
           bar_id: barId,
-          valor_total: getCarrinhoValorTotal(),
-          status: 'pendente'
+          valor_total: getCarrinhoValorTotal()
+          // Removido: status: 'pendente' - deixar NULL por padrão
         })
         .select()
         .single();

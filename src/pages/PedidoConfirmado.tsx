@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,12 +66,16 @@ export default function PedidoConfirmado() {
           });
         }
 
-        // Continue with regular verification
+        // Continue with regular verification for orders without status or with Mercado Pago preference
         if (data) {
-          if (data.stripe_session_id) {
-            await verifyStripePayment(data.stripe_session_id);
-          } else if (data.mercadopago_preference_id) {
-            await verifyMercadoPagoPayment(data.mercadopago_preference_id);
+          // Check if order has no status (NULL) or if we have payment info to verify
+          if (!data.status || data.stripe_session_id || data.mercadopago_preference_id || preferenceId) {
+            if (data.stripe_session_id) {
+              await verifyStripePayment(data.stripe_session_id);
+            } else if (data.mercadopago_preference_id || preferenceId) {
+              const prefId = data.mercadopago_preference_id || preferenceId;
+              await verifyMercadoPagoPayment(prefId);
+            }
           }
         }
       } catch (error: any) {
