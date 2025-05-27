@@ -39,6 +39,47 @@ export type Database = {
         }
         Relationships: []
       }
+      chaves_pix: {
+        Row: {
+          bar_id: string
+          chave_pix: string
+          created_at: string
+          id: string
+          nome_beneficiario: string
+          status: string
+          tipo_chave: string
+          updated_at: string
+        }
+        Insert: {
+          bar_id: string
+          chave_pix: string
+          created_at?: string
+          id?: string
+          nome_beneficiario: string
+          status?: string
+          tipo_chave: string
+          updated_at?: string
+        }
+        Update: {
+          bar_id?: string
+          chave_pix?: string
+          created_at?: string
+          id?: string
+          nome_beneficiario?: string
+          status?: string
+          tipo_chave?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chaves_pix_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       codigos_retirada: {
         Row: {
           codigo: string
@@ -245,6 +286,60 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      solicitacoes_saque: {
+        Row: {
+          bar_id: string
+          chave_pix_id: string
+          created_at: string
+          data_processamento: string | null
+          data_solicitacao: string
+          id: string
+          observacoes: string | null
+          status: string
+          updated_at: string
+          valor_solicitado: number
+        }
+        Insert: {
+          bar_id: string
+          chave_pix_id: string
+          created_at?: string
+          data_processamento?: string | null
+          data_solicitacao?: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor_solicitado: number
+        }
+        Update: {
+          bar_id?: string
+          chave_pix_id?: string
+          created_at?: string
+          data_processamento?: string | null
+          data_solicitacao?: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor_solicitado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_saque_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_saque_chave_pix_id_fkey"
+            columns: ["chave_pix_id"]
+            isOneToOne: false
+            referencedRelation: "chaves_pix"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

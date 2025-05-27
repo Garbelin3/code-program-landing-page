@@ -9,6 +9,12 @@ import { LogOut } from "lucide-react";
 import { BarList } from "@/components/BarList";
 import { GerenciarCardapio } from "@/components/produtos/GerenciarCardapio";
 import { VerificarRetirada } from "@/components/pedidos/VerificarRetirada";
+import { FaturamentoCard } from "@/components/dashboard/FaturamentoCard";
+import { CalendarioFaturamento } from "@/components/dashboard/CalendarioFaturamento";
+import { SolicitarSaque } from "@/components/dashboard/SolicitarSaque";
+import { HistoricoSaques } from "@/components/dashboard/HistoricoSaques";
+import { useFaturamento } from "@/hooks/useFaturamento";
+
 interface BarData {
   id: string;
   name: string;
@@ -180,6 +186,19 @@ const OwnerDashboard = ({
   profileData: ProfileData;
   barData: BarData | null;
 }) => {
+  const [dataInicio, setDataInicio] = useState<Date>();
+  const [dataFim, setDataFim] = useState<Date>();
+  const { faturamento, loading: faturamentoLoading } = useFaturamento(
+    barData?.id || '', 
+    dataInicio, 
+    dataFim
+  );
+
+  const handleDateRangeChange = (inicio?: Date, fim?: Date) => {
+    setDataInicio(inicio);
+    setDataFim(fim);
+  };
+
   return <>
       <Card className="mb-6">
         <CardHeader>
@@ -189,18 +208,49 @@ const OwnerDashboard = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            
-            
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div className="border rounded-md p-4 bg-indigo-50 col-span-1 md:col-span-3">
+          <div className="space-y-6">
+            {/* Cards de Faturamento */}
+            <FaturamentoCard 
+              total={faturamento.total}
+              mensal={faturamento.mensal}
+              semanal={faturamento.semanal}
+              loading={faturamentoLoading}
+            />
+
+            {/* Calendário e Gráfico de Faturamento */}
+            <CalendarioFaturamento 
+              porPeriodo={faturamento.porPeriodo}
+              onDateRangeChange={handleDateRangeChange}
+            />
+
+            {/* Grid com Gerenciamento de Cardápio e Saques */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {/* Gerenciamento de Cardápio */}
+              <div className="bg-indigo-50 border rounded-lg p-6">
                 {barData && <GerenciarCardapio barId={barData.id} barName={barData.name} />}
               </div>
-              
-              <div className="border rounded-md p-4 bg-amber-50 flex item-center justify-center">
-                <h4 className="font-bold text-amber-700 text-center text-base sm:text-lg">Relatórios Financeiros</h4>
+
+              {/* Sistema de Saques */}
+              <div className="space-y-4">
+                <div className="bg-green-50 border rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-green-800 mb-4">Sistema de Saques</h3>
+                  <p className="text-sm text-green-700 mb-4">
+                    Solicite saques do faturamento do seu bar via PIX
+                  </p>
+                  {barData && (
+                    <SolicitarSaque 
+                      barId={barData.id} 
+                      saldoDisponivel={faturamento.total} 
+                    />
+                  )}
+                </div>
               </div>
             </div>
+
+            {/* Histórico de Saques */}
+            {barData && (
+              <HistoricoSaques barId={barData.id} />
+            )}
           </div>
         </CardContent>
       </Card>
