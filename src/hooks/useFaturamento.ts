@@ -35,7 +35,7 @@ export const useFaturamento = (barId: string, dataInicio?: Date, dataFim?: Date)
 
         if (error) throw error;
 
-        if (!pedidos) {
+        if (!pedidos || pedidos.length === 0) {
           setFaturamento({ total: 0, mensal: 0, semanal: 0, porPeriodo: [] });
           return;
         }
