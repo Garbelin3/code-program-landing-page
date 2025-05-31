@@ -225,11 +225,7 @@ const OwnerDashboard = ({
               loading={faturamentoLoading}
             />
 
-            {/* Calendário e Gráfico de Faturamento */}
-            <CalendarioFaturamento 
-              porPeriodo={faturamento.porPeriodo}
-              onDateRangeChange={handleDateRangeChange}
-            />
+
 
             {/* Grid com Gerenciamento de Cardápio e Saques */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
