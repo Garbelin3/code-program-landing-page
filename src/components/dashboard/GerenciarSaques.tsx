@@ -3,22 +3,17 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckCircle, XCircle, Clock, Eye } from "lucide-react";
-import { useAllSaques } from "@/hooks/useAllSaques";
-import type { SolicitacaoSaque } from "@/hooks/useSaques";
-
-interface SaqueComBar extends SolicitacaoSaque {
-  bar?: { name: string };
-}
+import { useAllSaques, type SolicitacaoSaqueComBar } from "@/hooks/useAllSaques";
 
 export const GerenciarSaques = () => {
   const { saques, loading, atualizarStatusSaque } = useAllSaques();
   const [modalOpen, setModalOpen] = useState(false);
-  const [saqueParaProcessar, setSaqueParaProcessar] = useState<SaqueComBar | null>(null);
+  const [saqueParaProcessar, setSaqueParaProcessar] = useState<SolicitacaoSaqueComBar | null>(null);
   const [observacoes, setObservacoes] = useState('');
   const [acao, setAcao] = useState<'aprovar' | 'rejeitar' | null>(null);
   const [processando, setProcessando] = useState(false);
@@ -47,7 +42,7 @@ export const GerenciarSaques = () => {
     }
   };
 
-  const abrirModal = (saque: SaqueComBar, acao: 'aprovar' | 'rejeitar') => {
+  const abrirModal = (saque: SolicitacaoSaqueComBar, acao: 'aprovar' | 'rejeitar') => {
     setSaqueParaProcessar(saque);
     setAcao(acao);
     setObservacoes('');

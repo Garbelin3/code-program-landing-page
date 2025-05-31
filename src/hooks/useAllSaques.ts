@@ -2,10 +2,26 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import type { SolicitacaoSaque } from './useSaques';
+import type { ChavePix } from './useChavesPix';
+
+// Tipo extendido que inclui a relação com o bar
+export interface SolicitacaoSaqueComBar {
+  id: string;
+  bar_id: string;
+  chave_pix_id: string;
+  valor_solicitado: number;
+  status: 'pendente' | 'aprovado' | 'rejeitado';
+  data_solicitacao: string;
+  data_processamento?: string;
+  observacoes?: string;
+  created_at: string;
+  updated_at: string;
+  chave_pix?: ChavePix;
+  bar?: { name: string };
+}
 
 export const useAllSaques = () => {
-  const [saques, setSaques] = useState<SolicitacaoSaque[]>([]);
+  const [saques, setSaques] = useState<SolicitacaoSaqueComBar[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAllSaques = async () => {
@@ -23,7 +39,7 @@ export const useAllSaques = () => {
       if (error) throw error;
       
       // Type assertion para garantir que os tipos estão corretos
-      const typedData = (data || []) as (SolicitacaoSaque & { bar?: { name: string } })[];
+      const typedData = (data || []) as SolicitacaoSaqueComBar[];
       setSaques(typedData);
     } catch (error: any) {
       console.error('Erro ao buscar todos os saques:', error);
