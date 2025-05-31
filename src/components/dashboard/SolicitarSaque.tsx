@@ -39,7 +39,7 @@ export const SolicitarSaque = ({ barId, saldoDisponivel }: SolicitarSaqueProps) 
 
     const valor = parseFloat(formData.valor);
     if (valor <= 0 || valor > saldoDisponivel) {
-      alert('Valor inválido');
+      alert('Valor inválido ou superior ao saldo disponível');
       return;
     }
 
@@ -69,7 +69,7 @@ export const SolicitarSaque = ({ barId, saldoDisponivel }: SolicitarSaqueProps) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full">
+        <Button className="w-full" disabled={saldoDisponivel <= 0}>
           <DollarSign className="h-4 w-4 mr-2" />
           Solicitar Saque
         </Button>
@@ -115,12 +115,27 @@ export const SolicitarSaque = ({ barId, saldoDisponivel }: SolicitarSaqueProps) 
                 Cadastrar Chave PIX
               </Button>
             </div>
+          ) : saldoDisponivel <= 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">
+                Não há saldo disponível para saque
+              </p>
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">Saldo disponível</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {formatCurrency(saldoDisponivel)}
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="space-y-4">
               <div className="bg-muted p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">Saldo disponível</p>
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrency(saldoDisponivel)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Valor já descontando saques pendentes
                 </p>
               </div>
 

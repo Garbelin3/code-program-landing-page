@@ -222,10 +222,9 @@ const OwnerDashboard = ({
               total={faturamento.total}
               mensal={faturamento.mensal}
               semanal={faturamento.semanal}
+              disponivel={faturamento.disponivel}
               loading={faturamentoLoading}
             />
-
-
 
             {/* Grid com Gerenciamento de Cardápio e Saques */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -244,7 +243,7 @@ const OwnerDashboard = ({
                   {barData && (
                     <SolicitarSaque 
                       barId={barData.id} 
-                      saldoDisponivel={faturamento.total} 
+                      saldoDisponivel={faturamento.disponivel} 
                     />
                   )}
                 </div>

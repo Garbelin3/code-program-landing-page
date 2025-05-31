@@ -7,6 +7,7 @@ interface FaturamentoData {
   total: number;
   mensal: number;
   semanal: number;
+  disponivel: number; // Valor disponível para saque (total - saques pendentes/aprovados)
   porPeriodo: { data: string; valor: number }[];
 }
 
@@ -15,6 +16,7 @@ export const useFaturamento = (barId: string, dataInicio?: Date, dataFim?: Date)
     total: 0,
     mensal: 0,
     semanal: 0,
+    disponivel: 0,
     porPeriodo: []
   });
   const [loading, setLoading] = useState(true);
@@ -36,30 +38,6 @@ export const useFaturamento = (barId: string, dataInicio?: Date, dataFim?: Date)
       try {
         console.log('🔍 Buscando pedidos pagos para o bar:', barId);
         
-        // Primeiro, vamos verificar se conseguimos acessar a tabela pedidos
-        console.log('🧪 Teste 1: Verificando acesso básico à tabela pedidos...');
-        const { data: testPedidos, error: testError } = await supabase
-          .from('pedidos')
-          .select('id, bar_id, status')
-          .limit(5);
-        
-        console.log('🧪 Resultado do teste básico:');
-        console.log('- Error:', testError);
-        console.log('- Dados:', testPedidos);
-        console.log('- Quantidade:', testPedidos?.length || 0);
-
-        // Segundo, vamos verificar especificamente para este bar
-        console.log('🧪 Teste 2: Verificando pedidos específicos do bar...');
-        const { data: barPedidos, error: barError } = await supabase
-          .from('pedidos')
-          .select('id, bar_id, status, valor_total, data_pagamento')
-          .eq('bar_id', barId);
-        
-        console.log('🧪 Resultado pedidos do bar:');
-        console.log('- Error:', barError);
-        console.log('- Dados:', barPedidos);
-        console.log('- Quantidade:', barPedidos?.length || 0);
-
         // Buscar pedidos pagos do bar (consulta principal)
         const { data: pedidos, error } = await supabase
           .from('pedidos')
@@ -80,7 +58,7 @@ export const useFaturamento = (barId: string, dataInicio?: Date, dataFim?: Date)
 
         if (!pedidos || pedidos.length === 0) {
           console.log('⚠️ Nenhum pedido pago encontrado');
-          setFaturamento({ total: 0, mensal: 0, semanal: 0, porPeriodo: [] });
+          setFaturamento({ total: 0, mensal: 0, semanal: 0, disponivel: 0, porPeriodo: [] });
           return;
         }
 
@@ -110,14 +88,12 @@ export const useFaturamento = (barId: string, dataInicio?: Date, dataFim?: Date)
         const pedidosMes = pedidos.filter(p => {
           const dataPagamento = new Date(p.data_pagamento!);
           const isThisMonth = dataPagamento >= inicioMes;
-          console.log(`Pedido ${p.valor_total} - Data: ${dataPagamento.toISOString()} - É deste mês: ${isThisMonth}`);
           return isThisMonth;
         });
         
         const pedidosSemana = pedidos.filter(p => {
           const dataPagamento = new Date(p.data_pagamento!);
           const isThisWeek = dataPagamento >= inicioSemana;
-          console.log(`Pedido ${p.valor_total} - Data: ${dataPagamento.toISOString()} - É desta semana: ${isThisWeek}`);
           return isThisWeek;
         });
 
@@ -128,6 +104,32 @@ export const useFaturamento = (barId: string, dataInicio?: Date, dataFim?: Date)
         console.log('- Total:', total);
         console.log('- Mensal:', mensal);
         console.log('- Semanal:', semanal);
+
+        // Buscar saques pendentes e aprovados para calcular valor disponível
+        console.log('💸 Buscando saques para calcular valor disponível...');
+        const { data: saques, error: saquesError } = await supabase
+          .from('solicitacoes_saque')
+          .select('valor_solicitado, status')
+          .eq('bar_id', barId)
+          .in('status', ['pendente', 'aprovado']);
+
+        if (saquesError) {
+          console.error('❌ Erro ao buscar saques:', saquesError);
+          throw saquesError;
+        }
+
+        console.log('💸 Saques encontrados:', saques);
+
+        // Calcular total de saques pendentes e aprovados
+        const totalSaques = saques?.reduce((sum, saque) => {
+          return sum + Number(saque.valor_solicitado);
+        }, 0) || 0;
+
+        console.log('💸 Total de saques (pendentes + aprovados):', totalSaques);
+
+        // Valor disponível = Total faturado - Saques pendentes/aprovados
+        const disponivel = Math.max(0, total - totalSaques);
+        console.log('💰 Valor disponível para saque:', disponivel);
 
         // Dados por período (para o filtro de datas)
         let pedidosFiltrados = pedidos;
@@ -154,7 +156,7 @@ export const useFaturamento = (barId: string, dataInicio?: Date, dataFim?: Date)
 
         console.log('📊 Dados por período:', porPeriodo);
 
-        const novoFaturamento = { total, mensal, semanal, porPeriodo };
+        const novoFaturamento = { total, mensal, semanal, disponivel, porPeriodo };
         console.log('🎯 Faturamento final:', novoFaturamento);
         
         setFaturamento(novoFaturamento);
