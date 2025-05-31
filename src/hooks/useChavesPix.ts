@@ -31,7 +31,10 @@ export const useChavesPix = (barId: string) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setChaves(data || []);
+      
+      // Type assertion para garantir que os tipos estão corretos
+      const typedData = (data || []) as ChavePix[];
+      setChaves(typedData);
     } catch (error: any) {
       console.error('Erro ao buscar chaves PIX:', error);
       toast({

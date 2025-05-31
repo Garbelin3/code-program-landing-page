@@ -37,7 +37,10 @@ export const useSaques = (barId: string) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSaques(data || []);
+      
+      // Type assertion para garantir que os tipos estão corretos
+      const typedData = (data || []) as SolicitacaoSaque[];
+      setSaques(typedData);
     } catch (error: any) {
       console.error('Erro ao buscar saques:', error);
       toast({
