@@ -36,7 +36,31 @@ export const useFaturamento = (barId: string, dataInicio?: Date, dataFim?: Date)
       try {
         console.log('🔍 Buscando pedidos pagos para o bar:', barId);
         
-        // Buscar pedidos pagos do bar
+        // Primeiro, vamos verificar se conseguimos acessar a tabela pedidos
+        console.log('🧪 Teste 1: Verificando acesso básico à tabela pedidos...');
+        const { data: testPedidos, error: testError } = await supabase
+          .from('pedidos')
+          .select('id, bar_id, status')
+          .limit(5);
+        
+        console.log('🧪 Resultado do teste básico:');
+        console.log('- Error:', testError);
+        console.log('- Dados:', testPedidos);
+        console.log('- Quantidade:', testPedidos?.length || 0);
+
+        // Segundo, vamos verificar especificamente para este bar
+        console.log('🧪 Teste 2: Verificando pedidos específicos do bar...');
+        const { data: barPedidos, error: barError } = await supabase
+          .from('pedidos')
+          .select('id, bar_id, status, valor_total, data_pagamento')
+          .eq('bar_id', barId);
+        
+        console.log('🧪 Resultado pedidos do bar:');
+        console.log('- Error:', barError);
+        console.log('- Dados:', barPedidos);
+        console.log('- Quantidade:', barPedidos?.length || 0);
+
+        // Buscar pedidos pagos do bar (consulta principal)
         const { data: pedidos, error } = await supabase
           .from('pedidos')
           .select('valor_total, data_pagamento, status')
@@ -44,7 +68,7 @@ export const useFaturamento = (barId: string, dataInicio?: Date, dataFim?: Date)
           .eq('status', 'pago')
           .not('data_pagamento', 'is', null);
 
-        console.log('📊 Resultado da consulta:');
+        console.log('📊 Resultado da consulta principal:');
         console.log('- Error:', error);
         console.log('- Dados retornados:', pedidos);
         console.log('- Quantidade de pedidos:', pedidos?.length || 0);
