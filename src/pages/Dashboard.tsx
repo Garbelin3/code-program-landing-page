@@ -14,6 +14,7 @@ import { CalendarioFaturamento } from "@/components/dashboard/CalendarioFaturame
 import { SolicitarSaque } from "@/components/dashboard/SolicitarSaque";
 import { HistoricoSaques } from "@/components/dashboard/HistoricoSaques";
 import { useFaturamento } from "@/hooks/useFaturamento";
+import { GerenciarSaques } from "@/components/dashboard/GerenciarSaques";
 
 interface BarData {
   id: string;
@@ -160,19 +161,25 @@ const AdminDashboard = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="border rounded-md p-4 bg-blue-50 flex flex-col justify-center">
-              <h4 className="font-bold text-blue-700 text-base sm:text-lg">Gerenciar Usuários</h4>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">
-                Você tem acesso completo a todos os usuários
-              </p>
+          <div className="space-y-6">
+            {/* Cards de informações gerais */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="border rounded-md p-4 bg-blue-50 flex flex-col justify-center">
+                <h4 className="font-bold text-blue-700 text-base sm:text-lg">Gerenciar Usuários</h4>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">
+                  Você tem acesso completo a todos os usuários
+                </p>
+              </div>
+              <div className="border rounded-md p-4 bg-green-50 flex flex-col justify-center">
+                <h4 className="font-bold text-green-700 text-base sm:text-lg">Gerenciar Bares</h4>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">
+                  Você tem acesso para gerenciar todos os bares
+                </p>
+              </div>
             </div>
-            <div className="border rounded-md p-4 bg-green-50 flex flex-col justify-center">
-              <h4 className="font-bold text-green-700 text-base sm:text-lg">Gerenciar Bares</h4>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">
-                Você tem acesso para gerenciar todos os bares
-              </p>
-            </div>
+
+            {/* Gerenciamento de Saques */}
+            <GerenciarSaques />
           </div>
         </CardContent>
       </Card>
