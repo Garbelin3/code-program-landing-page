@@ -38,6 +38,7 @@ const Dashboard = ({
   const [barData, setBarData] = useState<BarData | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  
   useEffect(() => {
     const fetchProfileAndBar = async () => {
       if (!user) return;
@@ -188,11 +189,18 @@ const OwnerDashboard = ({
 }) => {
   const [dataInicio, setDataInicio] = useState<Date>();
   const [dataFim, setDataFim] = useState<Date>();
+  
+  console.log('🏪 OwnerDashboard - barData:', barData);
+  console.log('🏪 OwnerDashboard - barId sendo passado:', barData?.id || '');
+  
   const { faturamento, loading: faturamentoLoading } = useFaturamento(
     barData?.id || '', 
     dataInicio, 
     dataFim
   );
+
+  console.log('💹 OwnerDashboard - faturamento recebido:', faturamento);
+  console.log('💹 OwnerDashboard - loading:', faturamentoLoading);
 
   const handleDateRangeChange = (inicio?: Date, fim?: Date) => {
     setDataInicio(inicio);
