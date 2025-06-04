@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CardapioSeletor } from './CardapioSeletor';
 import { CarrinhoItens } from './CarrinhoItens';
 import { FinalizacaoPedido } from './FinalizacaoPedido';
 import { HistoricoDia } from './HistoricoDia';
 import { usePDV } from '@/hooks/usePDV';
-import { ShoppingCart, History, Calculator } from 'lucide-react';
+import { ShoppingCart, History, Calculator, AlertCircle } from 'lucide-react';
 
 interface PainelCaixaProps {
   barId: string;
@@ -22,6 +23,7 @@ export const PainelCaixa = ({ barId, barName }: PainelCaixaProps) => {
     metodoPagamento,
     observacoes,
     finalizando,
+    pdvUserReady,
     adicionarItem,
     removerItem,
     alterarQuantidade,
@@ -55,6 +57,16 @@ export const PainelCaixa = ({ barId, barName }: PainelCaixaProps) => {
           </h1>
           <p className="text-gray-600 mt-1">Painel do Caixa para pedidos presenciais</p>
         </div>
+
+        {/* Alerta se o sistema PDV não estiver pronto */}
+        {!pdvUserReady && (
+          <Alert className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Sistema PDV inicializando... Aguarde a verificação do usuário PDV.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Tabs defaultValue="venda" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:w-auto">
@@ -113,7 +125,7 @@ export const PainelCaixa = ({ barId, barName }: PainelCaixaProps) => {
                 </Card>
 
                 {/* Finalização */}
-                {carrinho.length > 0 && (
+                {carrinho.length > 0 && pdvUserReady && (
                   <Card>
                     <CardHeader>
                       <CardTitle>Finalizar Pedido</CardTitle>
