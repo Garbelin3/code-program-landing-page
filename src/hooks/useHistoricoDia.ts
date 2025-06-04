@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import type { PedidoFinalizadoDia, MetodoPagamento } from '@/types/pdv';
+import type { PedidoFinalizadoDia } from '@/types/pdv';
 
 export const useHistoricoDia = (barId: string) => {
   const [pedidos, setPedidos] = useState<PedidoFinalizadoDia[]>([]);
@@ -51,41 +51,6 @@ export const useHistoricoDia = (barId: string) => {
     }
   };
 
-  const reenviarCodigo = async (pedidoId: string, email: string) => {
-    try {
-      // Buscar código de retirada
-      const { data: codigo, error: codigoError } = await supabase
-        .from('codigos_retirada')
-        .select('codigo')
-        .eq('pedido_pdv_id', pedidoId)
-        .single();
-
-      if (codigoError) throw codigoError;
-
-      // Reenviar por email
-      await supabase.functions.invoke('send-pedido-code', {
-        body: {
-          email,
-          codigo: codigo.codigo,
-          pedidoId,
-          reenvio: true
-        }
-      });
-
-      toast({
-        title: 'Código reenviado',
-        description: `Código enviado para ${email}`
-      });
-    } catch (error: any) {
-      console.error('Erro ao reenviar código:', error);
-      toast({
-        title: 'Erro ao reenviar código',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
-  };
-
   useEffect(() => {
     if (barId) {
       fetchPedidosDia();
@@ -95,7 +60,6 @@ export const useHistoricoDia = (barId: string) => {
   return {
     pedidos,
     loading,
-    reenviarCodigo,
     refetch: fetchPedidosDia
   };
 };

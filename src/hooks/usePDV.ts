@@ -69,26 +69,13 @@ export const usePDV = (barId: string) => {
     setFinalizando(true);
     try {
       const valorTotal = calcularTotal();
-      let userId = null;
 
-      // Se há email do cliente, tenta buscar o usuário
-      if (cliente.email) {
-        const { data: userIdResult } = await supabase
-          .rpc('buscar_usuario_por_email', { 
-            email_busca: cliente.email 
-          });
-        
-        if (userIdResult) {
-          userId = userIdResult;
-        }
-      }
-
-      // Criar o pedido PDV
+      // Criar o pedido PDV sem vincular a usuário
       const { data: pedidoPDV, error: pedidoError } = await supabase
         .from('pedidos_pdv')
         .insert({
           bar_id: barId,
-          user_id: userId,
+          user_id: null, // Não vincular a usuário específico
           valor_total: valorTotal,
           metodo_pagamento: metodoPagamento,
           observacoes: observacoes || null,
@@ -120,11 +107,11 @@ export const usePDV = (barId: string) => {
       // Gerar código de retirada
       const codigoRetirada = Math.random().toString(36).substring(2, 8).toUpperCase();
       
-      // Inserir código de retirada corrigido - usar apenas pedido_pdv_id e deixar pedido_id como null
+      // Inserir código de retirada para pedido PDV
       const { error: codigoError } = await supabase
         .from('codigos_retirada')
         .insert({
-          pedido_id: null, // Explicitamente null para pedidos PDV
+          pedido_id: null,
           pedido_pdv_id: pedidoPDV.id,
           codigo: codigoRetirada,
           itens: itensFormatados.map(item => ({
@@ -135,24 +122,6 @@ export const usePDV = (barId: string) => {
         });
 
       if (codigoError) throw codigoError;
-
-      // Se há email do cliente, enviar código por email
-      if (cliente.email) {
-        try {
-          await supabase.functions.invoke('send-pedido-code', {
-            body: {
-              email: cliente.email,
-              codigo: codigoRetirada,
-              pedidoId: pedidoPDV.id,
-              valorTotal,
-              itens: carrinho
-            }
-          });
-        } catch (emailError) {
-          console.warn('Erro ao enviar email:', emailError);
-          // Não falha o pedido se o email falhar
-        }
-      }
 
       limparCarrinho();
       

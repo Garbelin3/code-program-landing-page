@@ -1,13 +1,9 @@
 
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CalendarDays, Mail, RotateCcw, TrendingUp, CreditCard, Banknote, Smartphone } from 'lucide-react';
+import { CalendarDays, RotateCcw, TrendingUp, CreditCard, Banknote, Smartphone } from 'lucide-react';
 import { useHistoricoDia } from '@/hooks/useHistoricoDia';
 
 interface HistoricoDiaProps {
@@ -15,10 +11,7 @@ interface HistoricoDiaProps {
 }
 
 export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
-  const { pedidos, loading, reenviarCodigo, refetch } = useHistoricoDia(barId);
-  const [emailReenvio, setEmailReenvio] = useState('');
-  const [pedidoParaReenvio, setPedidoParaReenvio] = useState<string>('');
-  const [modalReenvioAberto, setModalReenvioAberto] = useState(false);
+  const { pedidos, loading, refetch } = useHistoricoDia(barId);
 
   const formatarHora = (dataString: string) => {
     return new Date(dataString).toLocaleTimeString('pt-BR', {
@@ -29,21 +22,6 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
 
   const calcularTotalDia = () => {
     return pedidos.reduce((total, pedido) => total + pedido.valor_total, 0);
-  };
-
-  const abrirModalReenvio = (pedidoId: string, emailExistente?: string) => {
-    setPedidoParaReenvio(pedidoId);
-    setEmailReenvio(emailExistente || '');
-    setModalReenvioAberto(true);
-  };
-
-  const handleReenviarCodigo = async () => {
-    if (!emailReenvio.trim()) return;
-    
-    await reenviarCodigo(pedidoParaReenvio, emailReenvio);
-    setModalReenvioAberto(false);
-    setEmailReenvio('');
-    setPedidoParaReenvio('');
   };
 
   const getIconeMetodo = (metodo?: string) => {
@@ -143,7 +121,7 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
                   <TableHead>Valor</TableHead>
                   <TableHead>Pagamento</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead>Observações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -175,15 +153,9 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => abrirModalReenvio(pedido.id, pedido.cliente_email || undefined)}
-                        className="flex items-center gap-1"
-                      >
-                        <Mail className="h-3 w-3" />
-                        Enviar Código
-                      </Button>
+                      <div className="text-sm text-muted-foreground">
+                        {pedido.observacoes || 'Sem observações'}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -192,46 +164,6 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
           )}
         </CardContent>
       </Card>
-
-      {/* Modal para Reenvio de Código */}
-      <Dialog open={modalReenvioAberto} onOpenChange={setModalReenvioAberto}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Enviar Código de Retirada</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="email-reenvio">E-mail do Cliente</Label>
-              <Input
-                id="email-reenvio"
-                type="email"
-                placeholder="cliente@exemplo.com"
-                value={emailReenvio}
-                onChange={(e) => setEmailReenvio(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleReenviarCodigo}
-                disabled={!emailReenvio.trim()}
-                className="flex-1"
-              >
-                <Mail className="h-4 w-4 mr-1" />
-                Enviar Código
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setModalReenvioAberto(false)}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

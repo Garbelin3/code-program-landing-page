@@ -87,7 +87,7 @@ export type Database = {
           id: string
           invalidado: boolean | null
           itens: Json
-          pedido_id: string
+          pedido_id: string | null
           pedido_pdv_id: string | null
           usado: boolean | null
         }
@@ -97,7 +97,7 @@ export type Database = {
           id?: string
           invalidado?: boolean | null
           itens: Json
-          pedido_id: string
+          pedido_id?: string | null
           pedido_pdv_id?: string | null
           usado?: boolean | null
         }
@@ -107,7 +107,7 @@ export type Database = {
           id?: string
           invalidado?: boolean | null
           itens?: Json
-          pedido_id?: string
+          pedido_id?: string | null
           pedido_pdv_id?: string | null
           usado?: boolean | null
         }
@@ -117,13 +117,6 @@ export type Database = {
             columns: ["pedido_id"]
             isOneToOne: false
             referencedRelation: "pedidos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "codigos_retirada_pedido_pdv_id_fkey"
-            columns: ["pedido_pdv_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos_pdv"
             referencedColumns: ["id"]
           },
         ]
@@ -219,114 +212,6 @@ export type Database = {
             columns: ["bar_id"]
             isOneToOne: false
             referencedRelation: "bars"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pedidos_pdv: {
-        Row: {
-          bar_id: string
-          cliente_email: string | null
-          cliente_nome: string | null
-          created_at: string
-          id: string
-          metodo_pagamento: string | null
-          observacoes: string | null
-          status: string
-          updated_at: string
-          user_id: string | null
-          valor_total: number
-        }
-        Insert: {
-          bar_id: string
-          cliente_email?: string | null
-          cliente_nome?: string | null
-          created_at?: string
-          id?: string
-          metodo_pagamento?: string | null
-          observacoes?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string | null
-          valor_total: number
-        }
-        Update: {
-          bar_id?: string
-          cliente_email?: string | null
-          cliente_nome?: string | null
-          created_at?: string
-          id?: string
-          metodo_pagamento?: string | null
-          observacoes?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string | null
-          valor_total?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pedidos_pdv_bar_id_fkey"
-            columns: ["bar_id"]
-            isOneToOne: false
-            referencedRelation: "bars"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pedidos_pdv_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pedidos_pdv_itens: {
-        Row: {
-          created_at: string
-          id: string
-          nome_produto: string
-          pedido_pdv_id: string
-          preco_unitario: number
-          produto_id: string
-          quantidade: number
-          quantidade_restante: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          nome_produto: string
-          pedido_pdv_id: string
-          preco_unitario: number
-          produto_id: string
-          quantidade: number
-          quantidade_restante: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          nome_produto?: string
-          pedido_pdv_id?: string
-          preco_unitario?: number
-          produto_id?: string
-          quantidade?: number
-          quantidade_restante?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pedidos_pdv_itens_pedido_pdv_id_fkey"
-            columns: ["pedido_pdv_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos_pdv"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pedidos_pdv_itens_produto_id_fkey"
-            columns: ["produto_id"]
-            isOneToOne: false
-            referencedRelation: "produtos"
             referencedColumns: ["id"]
           },
         ]

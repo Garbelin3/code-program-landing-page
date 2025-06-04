@@ -94,11 +94,9 @@ export const FinalizacaoPedido = ({
               </div>
             </div>
 
-            {cliente.email && (
-              <p className="text-sm text-green-700 mb-4">
-                ✉️ Código enviado para: {cliente.email}
-              </p>
-            )}
+            <p className="text-sm text-green-700 mb-4">
+              📱 Forneça este código ao cliente para retirada
+            </p>
           </CardContent>
         </Card>
 
@@ -125,19 +123,16 @@ export const FinalizacaoPedido = ({
 
       <Separator />
 
-      {/* Dados do Cliente (Opcional) */}
+      {/* Dados do Cliente (Opcional para identificação) */}
       <div className="space-y-2">
-        <Label htmlFor="cliente-email">E-mail do Cliente (opcional)</Label>
+        <Label htmlFor="cliente-nome">Nome do Cliente (opcional)</Label>
         <Input
-          id="cliente-email"
-          type="email"
-          placeholder="cliente@exemplo.com"
-          value={cliente.email || ''}
-          onChange={(e) => onClienteChange({ ...cliente, email: e.target.value })}
+          id="cliente-nome"
+          type="text"
+          placeholder="Nome para identificação"
+          value={cliente.nome || ''}
+          onChange={(e) => onClienteChange({ ...cliente, nome: e.target.value })}
         />
-        <p className="text-xs text-muted-foreground">
-          Se informado, o código será enviado por e-mail
-        </p>
       </div>
 
       {/* Método de Pagamento */}
