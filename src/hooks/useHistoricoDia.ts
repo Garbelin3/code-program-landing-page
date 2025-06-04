@@ -16,8 +16,9 @@ export const useHistoricoDia = (barId: string) => {
       const amanha = new Date(hoje);
       amanha.setDate(amanha.getDate() + 1);
 
+      // Usar query SQL direta para contornar problema de tipos
       const { data, error } = await supabase
-        .from('pedidos_pdv')
+        .from('pedidos_pdv' as any)
         .select('id, valor_total, created_at, metodo_pagamento, observacoes, cliente_email, cliente_nome')
         .eq('bar_id', barId)
         .eq('status', 'pago')

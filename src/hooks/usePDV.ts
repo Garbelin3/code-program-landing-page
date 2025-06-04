@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import type { ItemCarrinho, ClientePDV, MetodoPagamento, PedidoPDV, PedidoFinalizadoDia } from '@/types/pdv';
+import type { ItemCarrinho, ClientePDV, MetodoPagamento } from '@/types/pdv';
 
 export const usePDV = (barId: string) => {
   const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([]);
@@ -72,7 +72,7 @@ export const usePDV = (barId: string) => {
 
       // Criar o pedido PDV sem vincular a usuário
       const { data: pedidoPDV, error: pedidoError } = await supabase
-        .from('pedidos_pdv')
+        .from('pedidos_pdv' as any)
         .insert({
           bar_id: barId,
           user_id: null, // Não vincular a usuário específico
@@ -99,7 +99,7 @@ export const usePDV = (barId: string) => {
       }));
 
       const { error: itensError } = await supabase
-        .from('pedidos_pdv_itens')
+        .from('pedidos_pdv_itens' as any)
         .insert(itensFormatados);
 
       if (itensError) throw itensError;
