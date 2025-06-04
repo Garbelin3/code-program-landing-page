@@ -69,24 +69,41 @@ export const usePDV = (barId: string) => {
     setFinalizando(true);
     try {
       const valorTotal = calcularTotal();
+      let userId = null;
 
-      // Criar o pedido
-      const { data: pedido, error: pedidoError } = await supabase
-        .from('pedidos')
+      // Se há email do cliente, tenta buscar o usuário
+      if (cliente.email) {
+        const { data: userIdResult } = await supabase
+          .rpc('buscar_usuario_por_email', { 
+            email_busca: cliente.email 
+          });
+        
+        if (userIdResult) {
+          userId = userIdResult;
+        }
+      }
+
+      // Criar o pedido PDV
+      const { data: pedidoPDV, error: pedidoError } = await supabase
+        .from('pedidos_pdv')
         .insert({
           bar_id: barId,
-          user_id: null, // Pedido presencial não tem user_id
+          user_id: userId,
           valor_total: valorTotal,
-          status: 'pago' // Marca como pago imediatamente
+          metodo_pagamento: metodoPagamento,
+          observacoes: observacoes || null,
+          cliente_email: cliente.email || null,
+          cliente_nome: cliente.nome || null,
+          status: 'pago'
         })
         .select()
         .single();
 
       if (pedidoError) throw pedidoError;
 
-      // Criar os itens do pedido
+      // Criar os itens do pedido PDV
       const itensFormatados = carrinho.map(item => ({
-        pedido_id: pedido.id,
+        pedido_pdv_id: pedidoPDV.id,
         produto_id: item.produto_id,
         nome_produto: item.nome,
         quantidade: item.quantidade,
@@ -95,7 +112,7 @@ export const usePDV = (barId: string) => {
       }));
 
       const { error: itensError } = await supabase
-        .from('pedido_itens')
+        .from('pedidos_pdv_itens')
         .insert(itensFormatados);
 
       if (itensError) throw itensError;
@@ -106,7 +123,7 @@ export const usePDV = (barId: string) => {
       const { error: codigoError } = await supabase
         .from('codigos_retirada')
         .insert({
-          pedido_id: pedido.id,
+          pedido_pdv_id: pedidoPDV.id,
           codigo: codigoRetirada,
           itens: itensFormatados.map(item => ({
             produto_id: item.produto_id,
@@ -124,7 +141,7 @@ export const usePDV = (barId: string) => {
             body: {
               email: cliente.email,
               codigo: codigoRetirada,
-              pedidoId: pedido.id,
+              pedidoId: pedidoPDV.id,
               valorTotal,
               itens: carrinho
             }
@@ -154,7 +171,7 @@ export const usePDV = (barId: string) => {
     } finally {
       setFinalizando(false);
     }
-  }, [carrinho, barId, cliente, calcularTotal, limparCarrinho]);
+  }, [carrinho, barId, cliente, metodoPagamento, observacoes, calcularTotal, limparCarrinho]);
 
   return {
     carrinho,

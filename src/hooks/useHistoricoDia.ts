@@ -17,8 +17,8 @@ export const useHistoricoDia = (barId: string) => {
       amanha.setDate(amanha.getDate() + 1);
 
       const { data, error } = await supabase
-        .from('pedidos')
-        .select('id, valor_total, created_at, status')
+        .from('pedidos_pdv')
+        .select('id, valor_total, created_at, metodo_pagamento, observacoes, cliente_email, cliente_nome')
         .eq('bar_id', barId)
         .eq('status', 'pago')
         .gte('created_at', hoje.toISOString())
@@ -46,7 +46,7 @@ export const useHistoricoDia = (barId: string) => {
       const { data: codigo, error: codigoError } = await supabase
         .from('codigos_retirada')
         .select('codigo')
-        .eq('pedido_id', pedidoId)
+        .eq('pedido_pdv_id', pedidoId)
         .single();
 
       if (codigoError) throw codigoError;

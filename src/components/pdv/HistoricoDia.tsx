@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { CalendarDays, Mail, RotateCcw, TrendingUp } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CalendarDays, Mail, RotateCcw, TrendingUp, CreditCard, Banknote, Smartphone } from 'lucide-react';
 import { useHistoricoDia } from '@/hooks/useHistoricoDia';
+import type { MetodoPagamento } from '@/types/pdv';
 
 interface HistoricoDiaProps {
   barId: string;
@@ -31,9 +32,9 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
     return pedidos.reduce((total, pedido) => total + pedido.valor_total, 0);
   };
 
-  const abrirModalReenvio = (pedidoId: string) => {
+  const abrirModalReenvio = (pedidoId: string, emailExistente?: string) => {
     setPedidoParaReenvio(pedidoId);
-    setEmailReenvio('');
+    setEmailReenvio(emailExistente || '');
     setModalReenvioAberto(true);
   };
 
@@ -44,6 +45,35 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
     setModalReenvioAberto(false);
     setEmailReenvio('');
     setPedidoParaReenvio('');
+  };
+
+  const getIconeMetodo = (metodo?: MetodoPagamento) => {
+    switch (metodo) {
+      case 'dinheiro':
+        return <Banknote className="h-4 w-4" />;
+      case 'pix':
+        return <Smartphone className="h-4 w-4" />;
+      case 'cartao_credito':
+      case 'cartao_debito':
+        return <CreditCard className="h-4 w-4" />;
+      default:
+        return <Banknote className="h-4 w-4" />;
+    }
+  };
+
+  const getMetodoLabel = (metodo?: MetodoPagamento) => {
+    switch (metodo) {
+      case 'dinheiro':
+        return 'Dinheiro';
+      case 'pix':
+        return 'PIX';
+      case 'cartao_credito':
+        return 'Cartão de Crédito';
+      case 'cartao_debito':
+        return 'Cartão de Débito';
+      default:
+        return 'Não informado';
+    }
   };
 
   if (loading) {
@@ -70,13 +100,13 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">{pedidos.length}</div>
-              <div className="text-sm text-blue-700">Pedidos</div>
+              <div className="text-sm text-blue-700">Pedidos PDV</div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
                 R$ {calcularTotalDia().toFixed(2)}
               </div>
-              <div className="text-sm text-green-700">Faturamento</div>
+              <div className="text-sm text-green-700">Faturamento PDV</div>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">
@@ -93,7 +123,7 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5" />
-            Pedidos de Hoje
+            Pedidos PDV de Hoje
           </CardTitle>
           <Button variant="outline" size="sm" onClick={refetch}>
             <RotateCcw className="h-4 w-4 mr-1" />
@@ -104,7 +134,7 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
           {pedidos.length === 0 ? (
             <div className="text-center py-8">
               <CalendarDays className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground">Nenhum pedido realizado hoje</p>
+              <p className="text-muted-foreground">Nenhum pedido PDV realizado hoje</p>
             </div>
           ) : (
             <Table>
@@ -112,7 +142,8 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
                 <TableRow>
                   <TableHead>Horário</TableHead>
                   <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Pagamento</TableHead>
+                  <TableHead>Cliente</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -128,19 +159,31 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-green-600 border-green-600">
-                        Pago
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {getIconeMetodo(pedido.metodo_pagamento)}
+                        <span className="text-sm">
+                          {getMetodoLabel(pedido.metodo_pagamento)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {pedido.cliente_nome && <div className="font-medium">{pedido.cliente_nome}</div>}
+                        {pedido.cliente_email && <div className="text-muted-foreground">{pedido.cliente_email}</div>}
+                        {!pedido.cliente_nome && !pedido.cliente_email && (
+                          <span className="text-muted-foreground">Não informado</span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => abrirModalReenvio(pedido.id)}
+                        onClick={() => abrirModalReenvio(pedido.id, pedido.cliente_email || undefined)}
                         className="flex items-center gap-1"
                       >
                         <Mail className="h-3 w-3" />
-                        Reenviar
+                        Enviar Código
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -155,7 +198,7 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
       <Dialog open={modalReenvioAberto} onOpenChange={setModalReenvioAberto}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reenviar Código de Retirada</DialogTitle>
+            <DialogTitle>Enviar Código de Retirada</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">

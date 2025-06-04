@@ -30,4 +30,5 @@ export interface PedidoFinalizadoDia {
   metodo_pagamento?: MetodoPagamento;
   observacoes?: string;
   cliente_email?: string;
+  cliente_nome?: string;
 }
