@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import type { PedidoFinalizadoDia } from '@/types/pdv';
+import type { PedidoFinalizadoDia, MetodoPagamento } from '@/types/pdv';
 
 export const useHistoricoDia = (barId: string) => {
   const [pedidos, setPedidos] = useState<PedidoFinalizadoDia[]>([]);
@@ -27,7 +27,18 @@ export const useHistoricoDia = (barId: string) => {
 
       if (error) throw error;
 
-      setPedidos(data || []);
+      // Mapear dados do banco para o tipo correto
+      const pedidosFormatados: PedidoFinalizadoDia[] = (data || []).map(pedido => ({
+        id: pedido.id,
+        valor_total: pedido.valor_total,
+        created_at: pedido.created_at,
+        metodo_pagamento: pedido.metodo_pagamento,
+        observacoes: pedido.observacoes,
+        cliente_email: pedido.cliente_email,
+        cliente_nome: pedido.cliente_nome
+      }));
+
+      setPedidos(pedidosFormatados);
     } catch (error: any) {
       console.error('Erro ao buscar histórico:', error);
       toast({

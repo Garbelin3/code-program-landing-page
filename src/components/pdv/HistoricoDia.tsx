@@ -9,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CalendarDays, Mail, RotateCcw, TrendingUp, CreditCard, Banknote, Smartphone } from 'lucide-react';
 import { useHistoricoDia } from '@/hooks/useHistoricoDia';
-import type { MetodoPagamento } from '@/types/pdv';
 
 interface HistoricoDiaProps {
   barId: string;
@@ -47,7 +46,7 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
     setPedidoParaReenvio('');
   };
 
-  const getIconeMetodo = (metodo?: MetodoPagamento) => {
+  const getIconeMetodo = (metodo?: string) => {
     switch (metodo) {
       case 'dinheiro':
         return <Banknote className="h-4 w-4" />;
@@ -61,7 +60,7 @@ export const HistoricoDia = ({ barId }: HistoricoDiaProps) => {
     }
   };
 
-  const getMetodoLabel = (metodo?: MetodoPagamento) => {
+  const getMetodoLabel = (metodo?: string) => {
     switch (metodo) {
       case 'dinheiro':
         return 'Dinheiro';

@@ -120,9 +120,11 @@ export const usePDV = (barId: string) => {
       // Gerar código de retirada
       const codigoRetirada = Math.random().toString(36).substring(2, 8).toUpperCase();
       
+      // Inserir código de retirada corrigido - usar apenas pedido_pdv_id e deixar pedido_id como null
       const { error: codigoError } = await supabase
         .from('codigos_retirada')
         .insert({
+          pedido_id: null, // Explicitamente null para pedidos PDV
           pedido_pdv_id: pedidoPDV.id,
           codigo: codigoRetirada,
           itens: itensFormatados.map(item => ({

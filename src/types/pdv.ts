@@ -27,7 +27,7 @@ export interface PedidoFinalizadoDia {
   id: string;
   valor_total: number;
   created_at: string;
-  metodo_pagamento?: MetodoPagamento;
+  metodo_pagamento?: string; // Alterado para string para compatibilidade com o banco
   observacoes?: string;
   cliente_email?: string;
   cliente_nome?: string;
