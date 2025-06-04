@@ -16,7 +16,7 @@ export const useHistoricoDia = (barId: string) => {
       const amanha = new Date(hoje);
       amanha.setDate(amanha.getDate() + 1);
 
-      // Usar query SQL direta para contornar problema de tipos
+      // Usar query SQL direta com tipagem explícita
       const { data, error } = await supabase
         .from('pedidos_pdv' as any)
         .select('id, valor_total, created_at, metodo_pagamento, observacoes, cliente_email, cliente_nome')
@@ -28,8 +28,8 @@ export const useHistoricoDia = (barId: string) => {
 
       if (error) throw error;
 
-      // Mapear dados do banco para o tipo correto
-      const pedidosFormatados: PedidoFinalizadoDia[] = (data || []).map(pedido => ({
+      // Mapear dados do banco para o tipo correto com verificação de tipo
+      const pedidosFormatados: PedidoFinalizadoDia[] = (data as any[] || []).map((pedido: any) => ({
         id: pedido.id,
         valor_total: pedido.valor_total,
         created_at: pedido.created_at,

@@ -90,7 +90,7 @@ export const usePDV = (barId: string) => {
 
       // Criar os itens do pedido PDV
       const itensFormatados = carrinho.map(item => ({
-        pedido_pdv_id: pedidoPDV.id,
+        pedido_pdv_id: (pedidoPDV as any).id,
         produto_id: item.produto_id,
         nome_produto: item.nome,
         quantidade: item.quantidade,
@@ -112,7 +112,7 @@ export const usePDV = (barId: string) => {
         .from('codigos_retirada')
         .insert({
           pedido_id: null,
-          pedido_pdv_id: pedidoPDV.id,
+          pedido_pdv_id: (pedidoPDV as any).id,
           codigo: codigoRetirada,
           itens: itensFormatados.map(item => ({
             produto_id: item.produto_id,
