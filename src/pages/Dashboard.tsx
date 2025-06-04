@@ -15,6 +15,7 @@ import { SolicitarSaque } from "@/components/dashboard/SolicitarSaque";
 import { HistoricoSaques } from "@/components/dashboard/HistoricoSaques";
 import { useFaturamento } from "@/hooks/useFaturamento";
 import { GerenciarSaques } from "@/components/dashboard/GerenciarSaques";
+import { PainelCaixa } from "@/components/pdv/PainelCaixa";
 
 interface BarData {
   id: string;
@@ -309,28 +310,19 @@ const CashierDashboard = ({
   return <>
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-2xl sm:text-3xl">Painel do Caixa</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl">Painel do Caixa - PDV</CardTitle>
           <CardDescription className="text-base sm:text-lg">
-            Gerenciamento financeiro para: {barData?.name || "Bar não encontrado"}
+            Sistema PDV para: {barData?.name || "Bar não encontrado"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="border rounded-md p-4 bg-rose-50 flex flex-col justify-center">
-                <h4 className="font-bold text-rose-700 text-base sm:text-lg">Pagamentos</h4>
-                <p className="text-sm sm:text-base text-gray-600 mt-1">
-                  Gerencie e processe pagamentos
-                </p>
-              </div>
-              <div className="border rounded-md p-4 bg-amber-50 flex flex-col justify-center">
-                <h4 className="font-bold text-amber-700 text-base sm:text-lg">Fechamento de Caixa</h4>
-                <p className="text-sm sm:text-base text-gray-600 mt-1">
-                  Relatórios e fechamento diário
-                </p>
-              </div>
+          {barData ? (
+            <PainelCaixa barId={barData.id} barName={barData.name} />
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Erro: Bar não encontrado</p>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </>;
