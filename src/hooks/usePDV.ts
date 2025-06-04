@@ -1,11 +1,8 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { ItemCarrinho, ClientePDV, MetodoPagamento, PedidoPDV, PedidoFinalizadoDia } from '@/types/pdv';
-
-// ID fixo do usuário especial para pedidos PDV
-const PDV_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 export const usePDV = (barId: string) => {
   const [carrinho, setCarrinho] = useState<ItemCarrinho[]>([]);
@@ -13,40 +10,6 @@ export const usePDV = (barId: string) => {
   const [metodoPagamento, setMetodoPagamento] = useState<MetodoPagamento>('dinheiro');
   const [observacoes, setObservacoes] = useState('');
   const [finalizando, setFinalizando] = useState(false);
-  const [pdvUserReady, setPdvUserReady] = useState(false);
-
-  // Verificar se o usuário PDV existe ao inicializar
-  useEffect(() => {
-    const verificarUsuarioPDV = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', PDV_USER_ID)
-          .eq('role', 'sistema')
-          .single();
-
-        if (error) {
-          console.error('Erro ao verificar usuário PDV:', error);
-          toast({
-            title: 'Erro no sistema PDV',
-            description: 'Usuário PDV não configurado corretamente',
-            variant: 'destructive'
-          });
-          return;
-        }
-
-        if (data) {
-          setPdvUserReady(true);
-          console.log('✅ Usuário PDV verificado e pronto para uso');
-        }
-      } catch (error) {
-        console.error('Erro inesperado ao verificar usuário PDV:', error);
-      }
-    };
-
-    verificarUsuarioPDV();
-  }, []);
 
   const adicionarItem = useCallback((produto: Omit<ItemCarrinho, 'quantidade'>) => {
     setCarrinho(prev => {
@@ -103,39 +66,23 @@ export const usePDV = (barId: string) => {
       return null;
     }
 
-    if (!pdvUserReady) {
-      toast({
-        title: 'Sistema não pronto',
-        description: 'Aguarde a verificação do sistema PDV',
-        variant: 'destructive'
-      });
-      return null;
-    }
-
     setFinalizando(true);
     try {
       const valorTotal = calcularTotal();
 
-      console.log('🎯 Finalizando pedido PDV com user_id:', PDV_USER_ID);
-
-      // Criar o pedido com o ID do usuário PDV
+      // Criar o pedido
       const { data: pedido, error: pedidoError } = await supabase
         .from('pedidos')
         .insert({
           bar_id: barId,
-          user_id: PDV_USER_ID, // Usar ID do usuário PDV em vez de null
+          user_id: null, // Pedido presencial não tem user_id
           valor_total: valorTotal,
           status: 'pago' // Marca como pago imediatamente
         })
         .select()
         .single();
 
-      if (pedidoError) {
-        console.error('❌ Erro ao criar pedido:', pedidoError);
-        throw pedidoError;
-      }
-
-      console.log('✅ Pedido criado com sucesso:', pedido.id);
+      if (pedidoError) throw pedidoError;
 
       // Criar os itens do pedido
       const itensFormatados = carrinho.map(item => ({
@@ -151,12 +98,7 @@ export const usePDV = (barId: string) => {
         .from('pedido_itens')
         .insert(itensFormatados);
 
-      if (itensError) {
-        console.error('❌ Erro ao criar itens do pedido:', itensError);
-        throw itensError;
-      }
-
-      console.log('✅ Itens do pedido criados com sucesso');
+      if (itensError) throw itensError;
 
       // Gerar código de retirada
       const codigoRetirada = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -173,12 +115,7 @@ export const usePDV = (barId: string) => {
           }))
         });
 
-      if (codigoError) {
-        console.error('❌ Erro ao criar código de retirada:', codigoError);
-        throw codigoError;
-      }
-
-      console.log('✅ Código de retirada criado:', codigoRetirada);
+      if (codigoError) throw codigoError;
 
       // Se há email do cliente, enviar código por email
       if (cliente.email) {
@@ -192,9 +129,8 @@ export const usePDV = (barId: string) => {
               itens: carrinho
             }
           });
-          console.log('✅ Email enviado para:', cliente.email);
         } catch (emailError) {
-          console.warn('⚠️ Erro ao enviar email:', emailError);
+          console.warn('Erro ao enviar email:', emailError);
           // Não falha o pedido se o email falhar
         }
       }
@@ -208,7 +144,7 @@ export const usePDV = (barId: string) => {
 
       return codigoRetirada;
     } catch (error: any) {
-      console.error('❌ Erro ao finalizar pedido:', error);
+      console.error('Erro ao finalizar pedido:', error);
       toast({
         title: 'Erro ao finalizar pedido',
         description: error.message,
@@ -218,7 +154,7 @@ export const usePDV = (barId: string) => {
     } finally {
       setFinalizando(false);
     }
-  }, [carrinho, barId, cliente, calcularTotal, limparCarrinho, pdvUserReady]);
+  }, [carrinho, barId, cliente, calcularTotal, limparCarrinho]);
 
   return {
     carrinho,
@@ -226,7 +162,6 @@ export const usePDV = (barId: string) => {
     metodoPagamento,
     observacoes,
     finalizando,
-    pdvUserReady,
     adicionarItem,
     removerItem,
     alterarQuantidade,
