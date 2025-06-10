@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
+
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, ArrowRight } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { CheckCircle } from "lucide-react";
 
+<<<<<<< HEAD
 export default function PedidoConfirmado() {
   const { id: pedidoId } = useParams();
   const [pedido, setPedido] = useState<any>(null);
@@ -158,200 +157,20 @@ export default function PedidoConfirmado() {
     try {
       console.log("Updating pedido status directly from URL parameters");
       setVerifying(true);
+=======
+const PedidoConfirmado = () => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-700 relative overflow-hidden">
+      {/* Background elements */}
+      <div className="absolute inset-0 bg-gradient-to-br from-green-900/50 via-transparent to-black/30"></div>
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-400/10 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-300/10 rounded-full blur-3xl"></div>
+>>>>>>> aa712f34ab58b42cc9ef65e16910e7d7ea2eb865
       
-      // Update pedido status directly in database
-      const { data, error } = await supabase
-        .from("pedidos")
-        .update({
-          status: "pago",
-          data_pagamento: new Date().toISOString(),
-        })
-        .eq("id", pedidoId)
-        .select();
-      
-      if (error) {
-        console.error("Error updating pedido status:", error);
-        throw error;
-      }
-      
-      console.log("Successfully updated pedido status:", data);
-      
-      // Refresh pedido data
-      const { data: refreshedPedido, error: refreshError } = await supabase
-        .from("pedidos")
-        .select(`
-          id,
-          valor_total,
-          status,
-          data_pagamento,
-          stripe_session_id,
-          mercadopago_preference_id,
-          bar:bar_id (name, address)
-        `)
-        .eq("id", pedidoId)
-        .single();
-        
-      if (!refreshError && refreshedPedido) {
-        setPedido(refreshedPedido);
-        pedidoRef.current = refreshedPedido;
-        
-        return true;
-      }
-      
-      return false;
-    } catch (error: any) {
-      console.error("Error in updatePedidoStatus:", error);
-      return false;
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const verifyStripePayment = async (sessionId: string) => {
-    if (verifying) return false;
-
-    try {
-      setVerifying(true);
-      console.log("Verificando pagamento Stripe:", sessionId);
-
-      const { data, error } = await supabase.functions.invoke("verify-stripe-payment", {
-        body: { 
-          sessionId,
-          pedidoId
-         }
-      });
-
-      if (error) {
-        console.error("Erro ao chamar verify-stripe-payment:", error);
-        throw error;
-      }
-
-      console.log("Resultado da verificação Stripe:", data);
-
-      if (data.paid) {
-        const { data: updatedOrder, error: refreshError } = await supabase
-          .from("pedidos")
-          .select(`
-            id,
-            valor_total,
-            status,
-            data_pagamento,
-            stripe_session_id,
-            bar:bar_id (name, address)
-          `)
-          .eq("id", pedidoId)
-          .single();
-
-        if (!refreshError && updatedOrder) {
-          setPedido(updatedOrder);
-          pedidoRef.current = updatedOrder;
-
-          if (updatedOrder.status === "pago") {
-            toast({
-              title: "Pagamento confirmado",
-              description: "Redirecionando para seus pedidos...",
-              variant: "default",
-            });
-
-            return true;
-          }
-        }
-      }
-
-      return false;
-    } catch (error: any) {
-      console.error("Erro ao verificar pagamento Stripe:", error);
-      return false;
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const verifyMercadoPagoPayment = async (preferenceId: string) => {
-    if (verifying) return false;
-
-    try {
-      setVerifying(true);
-      console.log("Verificando pagamento Mercado Pago:", preferenceId);
-
-      const { data, error } = await supabase.functions.invoke("verify-mercadopago-payment", {
-        body: { 
-          preferenceId,
-          pedidoId
-         }
-      });
-
-      if (error) {
-        console.error("Erro ao chamar verify-mercadopago-payment:", error);
-        throw error;
-      }
-
-      console.log("Resultado da verificação Mercado Pago:", data);
-
-      if (data.paid) {
-        const { data: updatedOrder, error: refreshError } = await supabase
-          .from("pedidos")
-          .select(`
-            id,
-            valor_total,
-            status,
-            data_pagamento,
-            mercadopago_preference_id,
-            bar:bar_id (name, address)
-          `)
-          .eq("id", pedidoId)
-          .single();
-
-        if (!refreshError && updatedOrder) {
-          setPedido(updatedOrder);
-          pedidoRef.current = updatedOrder;
-
-          if (updatedOrder.status === "pago") {
-            toast({
-              title: "Pagamento confirmado",
-              description: "Redirecionando para seus pedidos...",
-              variant: "default",
-            });
-
-            return true;
-          }
-        }
-      }
-
-      return false;
-    } catch (error: any) {
-      console.error("Erro ao verificar pagamento Mercado Pago:", error);
-      return false;
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const handleVerifyPaymentClick = () => {
-    const currentPedido = pedidoRef.current;
-    if (!currentPedido) return;
-
-    if (currentPedido.stripe_session_id) {
-      verifyStripePayment(currentPedido.stripe_session_id);
-    } else if (currentPedido.mercadopago_preference_id) {
-      verifyMercadoPagoPayment(currentPedido.mercadopago_preference_id);
-    } else if (preferenceId) {
-      // Use preference ID from URL if available
-      verifyMercadoPagoPayment(preferenceId);
-    } else {
-      toast({
-        title: "Informações de pagamento não encontradas",
-        description: "Não foi possível verificar o status do pagamento",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="container mx-auto py-12 max-w-md">
-        <Card>
+      <div className="relative z-10 container mx-auto py-12 max-w-md flex items-center justify-center min-h-screen">
+        <Card className="glass-card backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl">
           <CardHeader className="text-center">
+<<<<<<< HEAD
             <CardTitle>Carregando pedido...</CardTitle>
           </CardHeader>
         </Card>
@@ -436,97 +255,25 @@ export default function PedidoConfirmado() {
               {pedido.status === "pago" 
                 ? "Seu pagamento foi confirmado com sucesso." 
                 : "Seu pedido foi registrado e estamos processando o pagamento."}
+=======
+            <CheckCircle className="mx-auto text-green-400 h-16 w-16 mb-4 drop-shadow-lg" />
+            <CardTitle className="text-white text-2xl font-bold">Pedido confirmado!</CardTitle>
+            <CardDescription className="text-green-100/80 text-lg">
+              Seu pagamento foi processado com sucesso.
+>>>>>>> aa712f34ab58b42cc9ef65e16910e7d7ea2eb865
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="border-t pt-4">
-              <h3 className="font-medium text-lg">{pedido.bar.name}</h3>
-              <p className="text-muted-foreground text-sm">{pedido.bar.address}</p>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Valor total:</span>
-              <span className="font-semibold">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.valor_total)}
-              </span>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Status:</span>
-              <span className={`font-semibold ${pedido.status === "pago" ? "text-green-600" : "text-yellow-600"}`}>
-                {pedido.status === "pago" ? "Pago" : "Processando pagamento"}
-              </span>
-            </div>
-
-            <div className="mt-6 pt-4 border-t">
-              <Button className="w-full" asChild>
-                <Link to="/meus-pedidos" className="flex items-center justify-center gap-2">
-                  Ver meus pedidos
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+          <CardContent className="text-center">
+            <Link to="/meus-pedidos">
+              <Button className="w-full mt-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium py-3 rounded-xl transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl">
+                Ver meus pedidos
               </Button>
-            </div>
+            </Link>
           </CardContent>
         </Card>
       </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto py-12 max-w-md">
-      <Card>
-        <CardHeader className="text-center">
-          {pedido.status === "pago" ? (
-            <>
-              <CheckCircle className="mx-auto text-green-500 h-16 w-16 mb-4" />
-              <CardTitle>Pedido confirmado!</CardTitle>
-              <CardDescription>Seu pagamento foi processado com sucesso.</CardDescription>
-            </>
-          ) : (
-            <>
-              <Clock className="mx-auto text-yellow-500 h-16 w-16 mb-4" />
-              <CardTitle>Aguardando confirmação</CardTitle>
-              <CardDescription>Estamos processando seu pagamento.</CardDescription>
-              <div className="mt-4">
-                <Button
-                  variant="outline"
-                  disabled={verifying}
-                  onClick={handleVerifyPaymentClick}
-                  className="mt-2"
-                >
-                  {verifying ? "Verificando..." : "Verificar pagamento"}
-                </Button>
-              </div>
-            </>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="border-t pt-4">
-            <h3 className="font-medium text-lg">{pedido.bar.name}</h3>
-            <p className="text-muted-foreground text-sm">{pedido.bar.address}</p>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Valor total:</span>
-            <span className="font-semibold">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.valor_total)}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Status:</span>
-            <span className={`font-semibold ${pedido.status === "pago" ? "text-green-600" : "text-yellow-600"}`}>
-              {pedido.status === "pago" ? "Pago" : "Aguardando pagamento"}
-            </span>
-          </div>
-
-          <div className="mt-6 pt-4 border-t text-center">
-            <Link to="/meus-pedidos">
-              <Button className="w-full">Ver meus pedidos</Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
-}
+};
+
+export default PedidoConfirmado;

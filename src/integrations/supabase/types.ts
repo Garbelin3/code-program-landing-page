@@ -39,6 +39,47 @@ export type Database = {
         }
         Relationships: []
       }
+      chaves_pix: {
+        Row: {
+          bar_id: string
+          chave_pix: string
+          created_at: string
+          id: string
+          nome_beneficiario: string
+          status: string
+          tipo_chave: string
+          updated_at: string
+        }
+        Insert: {
+          bar_id: string
+          chave_pix: string
+          created_at?: string
+          id?: string
+          nome_beneficiario: string
+          status?: string
+          tipo_chave: string
+          updated_at?: string
+        }
+        Update: {
+          bar_id?: string
+          chave_pix?: string
+          created_at?: string
+          id?: string
+          nome_beneficiario?: string
+          status?: string
+          tipo_chave?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chaves_pix_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       codigos_retirada: {
         Row: {
           codigo: string
@@ -46,7 +87,8 @@ export type Database = {
           id: string
           invalidado: boolean | null
           itens: Json
-          pedido_id: string
+          pedido_id: string | null
+          pedido_pdv_id: string | null
           usado: boolean | null
         }
         Insert: {
@@ -55,7 +97,8 @@ export type Database = {
           id?: string
           invalidado?: boolean | null
           itens: Json
-          pedido_id: string
+          pedido_id?: string | null
+          pedido_pdv_id?: string | null
           usado?: boolean | null
         }
         Update: {
@@ -64,7 +107,8 @@ export type Database = {
           id?: string
           invalidado?: boolean | null
           itens?: Json
-          pedido_id?: string
+          pedido_id?: string | null
+          pedido_pdv_id?: string | null
           usado?: boolean | null
         }
         Relationships: [
@@ -132,12 +176,10 @@ export type Database = {
         Row: {
           bar_id: string
           created_at: string
-          data_criacao: string | null
           data_pagamento: string | null
           id: string
           mercadopago_preference_id: string | null
           status: string | null
-          stripe_session_id: string | null
           updated_at: string
           user_id: string
           valor_total: number
@@ -145,12 +187,10 @@ export type Database = {
         Insert: {
           bar_id: string
           created_at?: string
-          data_criacao?: string | null
           data_pagamento?: string | null
           id?: string
           mercadopago_preference_id?: string | null
           status?: string | null
-          stripe_session_id?: string | null
           updated_at?: string
           user_id: string
           valor_total: number
@@ -158,12 +198,10 @@ export type Database = {
         Update: {
           bar_id?: string
           created_at?: string
-          data_criacao?: string | null
           data_pagamento?: string | null
           id?: string
           mercadopago_preference_id?: string | null
           status?: string | null
-          stripe_session_id?: string | null
           updated_at?: string
           user_id?: string
           valor_total?: number
@@ -174,6 +212,107 @@ export type Database = {
             columns: ["bar_id"]
             isOneToOne: false
             referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos_pdv: {
+        Row: {
+          bar_id: string
+          cliente_email: string | null
+          cliente_nome: string | null
+          created_at: string
+          id: string
+          metodo_pagamento: string
+          observacoes: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          valor_total: number
+        }
+        Insert: {
+          bar_id: string
+          cliente_email?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          id?: string
+          metodo_pagamento: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          valor_total: number
+        }
+        Update: {
+          bar_id?: string
+          cliente_email?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          id?: string
+          metodo_pagamento?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_pdv_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos_pdv_itens: {
+        Row: {
+          created_at: string
+          id: string
+          nome_produto: string
+          pedido_pdv_id: string
+          preco_unitario: number
+          produto_id: string
+          quantidade: number
+          quantidade_restante: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome_produto: string
+          pedido_pdv_id: string
+          preco_unitario: number
+          produto_id: string
+          quantidade: number
+          quantidade_restante: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome_produto?: string
+          pedido_pdv_id?: string
+          preco_unitario?: number
+          produto_id?: string
+          quantidade?: number
+          quantidade_restante?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_pdv_itens_pedido_pdv_id_fkey"
+            columns: ["pedido_pdv_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos_pdv"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_pdv_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
             referencedColumns: ["id"]
           },
         ]
@@ -252,11 +391,69 @@ export type Database = {
         }
         Relationships: []
       }
+      solicitacoes_saque: {
+        Row: {
+          bar_id: string
+          chave_pix_id: string
+          created_at: string
+          data_processamento: string | null
+          data_solicitacao: string
+          id: string
+          observacoes: string | null
+          status: string
+          updated_at: string
+          valor_solicitado: number
+        }
+        Insert: {
+          bar_id: string
+          chave_pix_id: string
+          created_at?: string
+          data_processamento?: string | null
+          data_solicitacao?: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor_solicitado: number
+        }
+        Update: {
+          bar_id?: string
+          chave_pix_id?: string
+          created_at?: string
+          data_processamento?: string | null
+          data_solicitacao?: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+          valor_solicitado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_saque_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "bars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_saque_chave_pix_id_fkey"
+            columns: ["chave_pix_id"]
+            isOneToOne: false
+            referencedRelation: "chaves_pix"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      buscar_usuario_por_email: {
+        Args: { email_busca: string }
+        Returns: string
+      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean

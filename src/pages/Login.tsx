@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,15 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [creatingAdmin, setCreatingAdmin] = useState(false);
   const navigate = useNavigate();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const {
         data: {
@@ -24,6 +28,7 @@ const Login = () => {
         email,
         password
       });
+
       if (error) {
         throw error;
       }
@@ -33,9 +38,11 @@ const Login = () => {
         data: profileData,
         error: profileError
       } = await supabase.from("profiles").select("role, bar_id").eq("id", session?.user.id).single();
+      
       if (profileError) {
         throw profileError;
       }
+
       toast({
         title: "Login bem-sucedido",
         description: "Você foi autenticado com sucesso!"
@@ -57,6 +64,7 @@ const Login = () => {
       setLoading(false);
     }
   };
+
   const createAdminUser = async () => {
     setCreatingAdmin(true);
     try {
@@ -85,42 +93,71 @@ const Login = () => {
       setCreatingAdmin(false);
     }
   };
-  return <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-blue-500 to-purple-600 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">PedeBar</h1>
-          <p className="text-gray-600 mt-2">Entre na sua conta</p>
-        </div>
-        
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com" required />
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-700 relative overflow-hidden">
+      {/* Background elements */}
+      <div className="absolute inset-0 bg-gradient-to-br from-green-900/50 via-transparent to-black/30"></div>
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-400/10 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-300/10 rounded-full blur-3xl"></div>
+      
+      <div className="relative z-10 min-h-screen flex flex-col justify-center items-center p-4">
+        <div className="w-full max-w-md glass-card backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-green-100 bg-clip-text text-transparent mb-2">
+              PedeBar
+            </h1>
+            <p className="text-green-50/80 text-lg">Entre na sua conta</p>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="********" required />
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-white/90 font-medium">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+                placeholder="seu@email.com" 
+                required 
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:bg-white/15 focus:border-green-400/50 transition-all duration-200"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-white/90 font-medium">Senha</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+                placeholder="********" 
+                required 
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:bg-white/15 focus:border-green-400/50 transition-all duration-200"
+              />
+            </div>
+            
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium py-3 rounded-xl transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl" 
+              disabled={loading}
+            >
+              {loading ? "Entrando..." : "Entrar"}
+            </Button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-white/70">
+              Não tem uma conta?{" "}
+              <Link to="/register" className="text-green-300 hover:text-green-200 hover:underline font-medium transition-colors duration-200">
+                Cadastre-se
+              </Link>
+            </p>
           </div>
-          
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar"}
-          </Button>
-        </form>
-        
-        <div className="mt-4 text-center">
-          <p className="text-gray-600">
-            Não tem uma conta?{" "}
-            <Link to="/register" className="text-blue-600 hover:underline">
-              Cadastre-se
-            </Link>
-          </p>
-        </div>
-        
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Login;
