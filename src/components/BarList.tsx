@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,26 +105,26 @@ export const BarList = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {bars.map((bar) => (
-        <Card key={bar.id} className="overflow-hidden hover:shadow-lg transition-all duration-300">
-          <CardHeader className="bg-blue-50">
-            <CardTitle>{bar.name}</CardTitle>
+        <Card key={bar.id} className="overflow-hidden border border-green-100/80 bg-white/80 shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl">
+          <CardHeader className="bg-green-100/60 rounded-t-2xl">
+            <CardTitle className="text-green-900 font-bold text-xl">{bar.name}</CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="flex items-start space-x-2 mb-2">
-              <MapPin className="h-4 w-4 mt-1 text-gray-500" />
-              <p className="text-gray-600">{bar.address}</p>
+              <MapPin className="h-4 w-4 mt-1 text-green-700" />
+              <p className="text-green-800">{bar.address}</p>
             </div>
             {bar.phone && (
               <div className="flex items-center space-x-2">
-                <Phone className="h-4 w-4 text-gray-500" />
-                <p className="text-gray-600">{bar.phone}</p>
+                <Phone className="h-4 w-4 text-green-700" />
+                <p className="text-green-800">{bar.phone}</p>
               </div>
             )}
           </CardContent>
           <CardFooter>
             <Button 
               size="sm" 
-              className="w-full"
+              className="w-full bg-green-900 text-white font-semibold rounded-lg hover:bg-green-800 transition-all"
               asChild
             >
               <Link to={`/cardapio/${bar.id}`}>Ver Cardápio</Link>
