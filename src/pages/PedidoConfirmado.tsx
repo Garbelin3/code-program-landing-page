@@ -15,6 +15,9 @@ export default function PedidoConfirmado() {
   const [showRedirectMessage, setShowRedirectMessage] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [pollCount, setPollCount] = useState(0);
+  const MAX_POLL_COUNT = 20;
+  const [toastShown, setToastShown] = useState(false);
 
   // Parse URL query parameters for Mercado Pago response
   const searchParams = new URLSearchParams(location.search);
@@ -70,16 +73,6 @@ export default function PedidoConfirmado() {
           return;
         }
 
-        // Handle pending payments from URL parameters
-        if (data && paymentId && (status === "pending" || collectionStatus === "pending")) {
-          console.log("Payment pending via URL parameters. Will verify status...");
-          toast({
-            title: "Pagamento pendente",
-            description: "Seu pagamento está sendo processado. Aguarde a confirmação.",
-            variant: "default",
-          });
-        }
-
         // Continue with regular verification for orders without status or with Mercado Pago preference
         if (data) {
           // Check if order has no status (NULL) or if we have payment info to verify
@@ -108,7 +101,13 @@ export default function PedidoConfirmado() {
 
     // More aggressive polling for payment status
     const intervalId = setInterval(async () => {
+      setPollCount((prev) => prev + 1);
       const currentPedido = pedidoRef.current;
+
+      if (pollCount >= MAX_POLL_COUNT) {
+        clearInterval(intervalId);
+        return;
+      }
 
       if (currentPedido && currentPedido.status !== "pago") {
         console.log("Polling payment status...");
@@ -137,6 +136,22 @@ export default function PedidoConfirmado() {
   useEffect(() => {
     pedidoRef.current = pedido;
   }, [pedido]);
+
+  // Exibe toast quando status muda para 'pago' (e só uma vez)
+  useEffect(() => {
+    if (pedido && pedido.status === "pago" && !toastShown) {
+      toast({
+        title: "Pagamento confirmado!",
+        description: "Seu pagamento foi processado com sucesso.",
+        variant: "default",
+      });
+      setToastShown(true);
+    }
+    // Se voltar para pendente, permite mostrar novamente
+    if (pedido && pedido.status !== "pago" && toastShown) {
+      setToastShown(false);
+    }
+  }, [pedido, toastShown]);
 
   // New function to directly update pedido status based on URL parameters
   const updatePedidoStatus = async (pedidoId: string) => {
@@ -356,6 +371,53 @@ export default function PedidoConfirmado() {
             <Link to="/">
               <Button>Voltar para a página inicial</Button>
             </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Se polling excedeu o tempo máximo e não está pago
+  if (pollCount >= MAX_POLL_COUNT && (!pedido.status || pedido.status === "")) {
+    return (
+      <div className="container mx-auto py-12 max-w-md">
+        <Card>
+          <CardHeader className="text-center">
+            <Clock className="mx-auto text-yellow-500 h-16 w-16 mb-4" />
+            <CardTitle>Pagamento pendente</CardTitle>
+            <CardDescription>
+              Seu pagamento ainda está pendente. Isso pode levar alguns minutos para ser processado pelo banco ou operadora.<br />
+              Você pode verificar novamente mais tarde em "Meus pedidos".
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="border-t pt-4">
+              <h3 className="font-medium text-lg">{pedido.bar.name}</h3>
+              <p className="text-muted-foreground text-sm">{pedido.bar.address}</p>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Valor total:</span>
+              <span className="font-semibold">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.valor_total)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Status:</span>
+              <span className="font-semibold text-yellow-600">Aguardando pagamento</span>
+            </div>
+            <div className="mt-6 pt-4 border-t text-center">
+              <Link to="/meus-pedidos">
+                <Button className="w-full">Ver meus pedidos</Button>
+              </Link>
+              <Button
+                variant="outline"
+                disabled={verifying}
+                onClick={handleVerifyPaymentClick}
+                className="w-full mt-2"
+              >
+                {verifying ? "Verificando..." : "Tentar novamente"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
