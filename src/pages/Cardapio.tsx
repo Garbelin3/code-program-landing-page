@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +31,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { Header } from "@/components/Header";
 
 interface Bar {
   id: string;
@@ -66,6 +66,7 @@ const Cardapio = () => {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>("Todos");
   const [cart, setCart] = useLocalStorage<Cart>("cart", {});
   const [produtosFiltrados, setProdutosFiltrados] = useState<Produto[]>([]);
+  const [user, setUser] = useState<any>(null);
   
   useEffect(() => {
     const fetchBarEProdutos = async () => {
@@ -120,6 +121,14 @@ const Cardapio = () => {
       setProdutosFiltrados(produtos.filter(p => p.categoria === categoriaSelecionada));
     }
   }, [categoriaSelecionada, produtos]);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+    };
+    getUser();
+  }, []);
 
   const formatarPreco = (preco: number) => {
     return preco.toLocaleString('pt-BR', {
@@ -226,8 +235,10 @@ const Cardapio = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <div className="container mx-auto py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 relative overflow-hidden">
+      <Header user={user} loading={false} />
+      <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-600/10 blur-3xl"></div>
+      <div className="relative z-10 container mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-6">
           <Button 
             variant="outline" 
@@ -261,10 +272,10 @@ const Cardapio = () => {
           </Popover>
         </div>
         
-        <Card className="mb-8">
-          <CardHeader className="bg-purple-50">
-            <CardTitle className="text-2xl text-purple-900">{bar.name}</CardTitle>
-            <CardDescription className="text-purple-700">
+        <Card className="mb-8 shadow-none border-0 bg-green-50/40">
+          <CardHeader className="bg-green-100/60 rounded-t-2xl">
+            <CardTitle className="text-2xl text-green-900 font-bold">{bar.name}</CardTitle>
+            <CardDescription className="text-green-800">
               {bar.address}
               {bar.phone && ` | ${bar.phone}`}
             </CardDescription>
@@ -275,21 +286,21 @@ const Cardapio = () => {
           <div className="space-y-8">
             {Array.from(new Set(produtosFiltrados.map(p => p.categoria))).map(categoria => (
               <div key={categoria}>
-                <h2 className="text-xl font-bold mb-4 text-purple-800 border-b pb-2">{categoria}</h2>
+                <h2 className="text-xl font-bold mb-4 text-green-800 border-b pb-2">{categoria}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {produtosFiltrados
                     .filter(produto => produto.categoria === categoria)
                     .map(produto => (
-                      <Card key={produto.id} className="h-full">
-                        <CardContent className="p-4">
+                      <Card key={produto.id} className="h-full border border-green-100/80 shadow-md bg-white/80 hover:shadow-lg transition-all rounded-2xl">
+                        <CardContent className="p-5">
                           <div className="flex justify-between items-start mb-4">
                             <div>
-                              <h3 className="font-semibold text-lg">{produto.nome}</h3>
+                              <h3 className="font-semibold text-lg text-green-900">{produto.nome}</h3>
                               {produto.descricao && (
-                                <p className="text-gray-600 text-sm mt-1">{produto.descricao}</p>
+                                <p className="text-green-800/80 text-sm mt-1">{produto.descricao}</p>
                               )}
                             </div>
-                            <div className="text-purple-700 font-bold">
+                            <div className="text-green-700 font-bold text-lg">
                               {formatarPreco(produto.preco)}
                             </div>
                           </div>
@@ -300,14 +311,16 @@ const Cardapio = () => {
                                 size="icon"
                                 disabled={getQuantidade(produto.id) === 0}
                                 onClick={() => removerDoCarrinho(produto)}
+                                className="border-green-200 text-green-700 hover:bg-green-50"
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
-                              <span className="w-6 text-center">{getQuantidade(produto.id)}</span>
+                              <span className="w-6 text-center text-green-900 font-semibold">{getQuantidade(produto.id)}</span>
                               <Button
                                 variant="outline"
                                 size="icon"
                                 onClick={() => adicionarAoCarrinho(produto)}
+                                className="border-green-200 text-green-700 hover:bg-green-50"
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
