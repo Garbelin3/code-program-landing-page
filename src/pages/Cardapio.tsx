@@ -31,7 +31,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { Header } from "@/components/Header";
 
 interface Bar {
   id: string;
