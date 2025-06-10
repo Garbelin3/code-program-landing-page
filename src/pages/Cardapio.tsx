@@ -235,7 +235,7 @@ const Cardapio = () => {
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 relative overflow-hidden">
-      <Header user={user} loading={false} />
+      
       <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-600/10 blur-3xl"></div>
       <div className="relative z-10 container mx-auto py-8 px-4">
         <div className="flex justify-between items-center mb-6">
