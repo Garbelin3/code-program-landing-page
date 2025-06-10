@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingBag, ArrowLeft, Trash, CreditCard } from "lucide-react";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 
+
 interface Bar {
   id: string;
   name: string;
@@ -195,8 +196,10 @@ const Checkout = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 flex justify-center items-center">
-        <p className="text-lg text-gray-600">Carregando...</p>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 p-4 flex justify-center items-center relative overflow-hidden">
+      
+        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-600/10 blur-3xl"></div>
+        <p className="text-lg text-gray-600 z-10">Carregando...</p>
       </div>
     );
   }
@@ -213,8 +216,10 @@ const Checkout = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 relative overflow-hidden">
+      
+      <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-600/10 blur-3xl"></div>
+      <div className="relative z-10 container mx-auto py-8 px-4">
         <Button 
           variant="outline" 
           className="mb-6"
@@ -225,30 +230,28 @@ const Checkout = () => {
           </Link>
         </Button>
         
-        <Card className="mb-8">
-          <CardHeader className="bg-purple-50">
-            <CardTitle className="flex items-center gap-2">
-              <ShoppingBag className="h-5 w-5" /> Finalize seu pedido
+        <Card className="mb-8 border border-green-100/80 bg-white/80 shadow-md rounded-2xl">
+          <CardHeader className="bg-green-100/60 rounded-t-2xl">
+            <CardTitle className="flex items-center gap-2 text-green-900 font-bold">
+              <ShoppingBag className="h-5 w-5 text-green-700" /> Finalize seu pedido
             </CardTitle>
             {bar && (
-              <CardDescription className="text-purple-700">
+              <CardDescription className="text-green-800">
                 {bar.name} | {bar.address}
               </CardDescription>
             )}
           </CardHeader>
-          
           <CardContent className="pt-6">
-            <h2 className="text-xl font-bold mb-4">Itens do pedido</h2>
-            
+            <h2 className="text-xl font-bold mb-4 text-green-900">Itens do pedido</h2>
             <div className="space-y-4">
               {carrinhoItens.map((item) => (
                 <div key={item.id} className="flex items-center justify-between border-b pb-3">
                   <div>
-                    <h3 className="font-semibold">{item.nome}</h3>
-                    <p className="text-sm text-gray-500">{item.quantidade} x {formatarPreco(item.preco)}</p>
+                    <h3 className="font-semibold text-green-900">{item.nome}</h3>
+                    <p className="text-sm text-green-800/80">{item.quantidade} x {formatarPreco(item.preco)}</p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <p className="font-bold">{formatarPreco(item.preco * item.quantidade)}</p>
+                    <p className="font-bold text-green-900">{formatarPreco(item.preco * item.quantidade)}</p>
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -261,16 +264,14 @@ const Checkout = () => {
                 </div>
               ))}
             </div>
-            
-            <div className="mt-8 flex justify-between items-center font-bold text-lg">
+            <div className="mt-8 flex justify-between items-center font-bold text-lg text-green-900">
               <span>Total a pagar:</span>
               <span>{formatarPreco(getCarrinhoValorTotal())}</span>
             </div>
           </CardContent>
-          
           <CardFooter className="pt-4">
             <Button 
-              className="w-full"
+              className="w-full bg-green-900 text-white font-semibold rounded-lg hover:bg-green-800 transition-all"
               onClick={processarPedido}
               disabled={processando}
             >
