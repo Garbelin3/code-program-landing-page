@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    /* Light Mode Colors */
+    /* Light Mode Colors Only */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -37,9 +37,9 @@
     --radius: 0.75rem;
 
     /* Modern UI Variables */
-    --gradient-primary: linear-gradient(135deg, hsl(222.2 47.4% 11.2%) 0%, hsl(220 25% 25%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(210 40% 96.1%) 0%, hsl(220 13% 91%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(262.1 83.3% 57.8%) 0%, hsl(270 95% 75%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(142 69% 58%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(142 76% 96%) 0%, hsl(142 33% 91%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(142 83% 57%) 0%, hsl(142 95% 75%) 100%);
     
     /* Glassmorphism */
     --glass-bg: rgba(255, 255, 255, 0.1);
@@ -65,94 +65,6 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    /* Dark Mode Colors */
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-
-    /* Dark Mode Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(210 40% 98%) 0%, hsl(220 25% 85%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(217.2 32.6% 17.5%) 0%, hsl(220 15% 25%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(262.1 83.3% 57.8%) 0%, hsl(270 95% 75%) 100%);
-
-    /* Dark Glassmorphism */
-    --glass-bg: rgba(0, 0, 0, 0.2);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    
-    /* Dark Shadows */
-    --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.5);
-    --shadow-large: 0 8px 32px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.6);
-
-    /* Dark Sidebar */
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  /* Auto dark mode detection */
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --background: 222.2 84% 4.9%;
-      --foreground: 210 40% 98%;
-      --card: 222.2 84% 4.9%;
-      --card-foreground: 210 40% 98%;
-      --popover: 222.2 84% 4.9%;
-      --popover-foreground: 210 40% 98%;
-      --primary: 210 40% 98%;
-      --primary-foreground: 222.2 47.4% 11.2%;
-      --secondary: 217.2 32.6% 17.5%;
-      --secondary-foreground: 210 40% 98%;
-      --muted: 217.2 32.6% 17.5%;
-      --muted-foreground: 215 20.2% 65.1%;
-      --accent: 217.2 32.6% 17.5%;
-      --accent-foreground: 210 40% 98%;
-      --destructive: 0 62.8% 30.6%;
-      --destructive-foreground: 210 40% 98%;
-      --border: 217.2 32.6% 17.5%;
-      --input: 217.2 32.6% 17.5%;
-      --ring: 212.7 26.8% 83.9%;
-      
-      --gradient-primary: linear-gradient(135deg, hsl(210 40% 98%) 0%, hsl(220 25% 85%) 100%);
-      --gradient-secondary: linear-gradient(135deg, hsl(217.2 32.6% 17.5%) 0%, hsl(220 15% 25%) 100%);
-      --glass-bg: rgba(0, 0, 0, 0.2);
-      --glass-border: rgba(255, 255, 255, 0.1);
-      --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);
-      --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.5);
-      --shadow-large: 0 8px 32px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.6);
-    }
   }
 
   /* Reduced motion support */
@@ -290,7 +202,7 @@
     @apply hover:shadow-lg hover:shadow-primary/20;
   }
 
-  /* Modern Buttons */
+  /* Modern Buttons with Responsive Centering */
   .btn-modern {
     @apply relative overflow-hidden rounded-lg px-6 py-3 font-medium;
     @apply transition-all duration-200 ease-out;
@@ -306,6 +218,30 @@
   .btn-glass {
     @apply glass-surface text-foreground;
     @apply hover:bg-opacity-80 active:scale-95;
+  }
+
+  /* Responsive Button Container */
+  .btn-container {
+    @apply flex flex-col sm:flex-row items-center justify-center gap-4;
+    @apply w-full max-w-md mx-auto;
+  }
+
+  .btn-container .btn-modern {
+    @apply w-full sm:w-auto;
+    @apply min-w-[140px];
+    @apply text-center;
+  }
+
+  /* Header Button Container */
+  .header-btn-container {
+    @apply flex flex-col xs:flex-row items-center gap-2 xs:gap-4;
+  }
+
+  .header-btn-container .btn-modern {
+    @apply w-full xs:w-auto;
+    @apply min-w-[100px] xs:min-w-[120px];
+    @apply text-sm xs:text-base;
+    @apply px-3 xs:px-4 py-2 xs:py-2;
   }
 
   /* Modern Forms */
@@ -365,7 +301,7 @@
 
   /* Modern Navigation */
   .nav-modern {
-    @apply flex items-center justify-between p-4;
+    @apply flex flex-col xs:flex-row items-center justify-between p-4 gap-4 xs:gap-0;
     @apply sm:p-6 lg:p-8;
   }
 
