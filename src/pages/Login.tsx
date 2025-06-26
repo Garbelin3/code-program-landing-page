@@ -33,14 +33,19 @@ const Login = () => {
         throw error;
       }
 
-      // Fetch the user's profile to get their role
+      if (!session?.user) {
+        throw new Error("Falha na autenticação");
+      }
+
+      // Fetch the user's profile to get their role - using maybeSingle() to avoid errors
       const {
         data: profileData,
         error: profileError
-      } = await supabase.from("profiles").select("role, bar_id").eq("id", session?.user.id).single();
+      } = await supabase.from("profiles").select("role, bar_id").eq("id", session.user.id).maybeSingle();
       
       if (profileError) {
-        throw profileError;
+        console.error("Erro ao buscar perfil:", profileError);
+        // Continue mesmo se houver erro no perfil, usando role padrão
       }
 
       toast({
@@ -48,16 +53,18 @@ const Login = () => {
         description: "Você foi autenticado com sucesso!"
       });
 
-      // Redirect based on role
-      if (profileData.role === 'user') {
-        navigate("/dashboard"); // Regular users go to catalog/dashboard
+      // Redirect based on role - use default 'user' if profile not found
+      const userRole = profileData?.role || 'user';
+      if (userRole === 'user') {
+        navigate("/dashboard");
       } else {
-        navigate("/dashboard"); // Professional users will be redirected in the Dashboard component
+        navigate("/dashboard");
       }
     } catch (error: any) {
+      console.error("Erro no login:", error);
       toast({
         title: "Erro ao fazer login",
-        description: error.message,
+        description: error.message || "Erro desconhecido ao fazer login",
         variant: "destructive"
       });
     } finally {

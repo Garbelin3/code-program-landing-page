@@ -31,15 +31,22 @@ const App = () => {
       setUser(session?.user || null);
       
       if (session?.user) {
-        // Fetch user role
-        const { data: profileData } = await supabase
+        // Fetch user role - using maybeSingle() to avoid errors
+        const { data: profileData, error } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", session.user.id)
-          .single();
+          .maybeSingle();
           
+        if (error) {
+          console.error("Erro ao buscar perfil do usuário:", error);
+        }
+        
         if (profileData) {
           setUserRole(profileData.role);
+        } else {
+          // Default role if no profile found
+          setUserRole('user');
         }
       }
       
@@ -51,15 +58,22 @@ const App = () => {
           setUser(session?.user || null);
           
           if (session?.user) {
-            // Fetch user role
-            const { data: profileData } = await supabase
+            // Fetch user role - using maybeSingle() to avoid errors
+            const { data: profileData, error } = await supabase
               .from("profiles")
               .select("role")
               .eq("id", session.user.id)
-              .single();
+              .maybeSingle();
               
+            if (error) {
+              console.error("Erro ao buscar perfil do usuário:", error);
+            }
+            
             if (profileData) {
               setUserRole(profileData.role);
+            } else {
+              // Default role if no profile found
+              setUserRole('user');
             }
           } else {
             setUserRole(null);
